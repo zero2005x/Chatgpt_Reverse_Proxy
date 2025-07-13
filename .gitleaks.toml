@@ -1,0 +1,45 @@
+# Gitleaks configuration file
+# Helps detect secrets in git repositories
+
+title = "Gitleaks Config for AI Chat Proxy"
+
+[extend]
+# Use default Gitleaks rules
+useDefault = true
+
+[[rules]]
+description = "Username Pattern"
+id = "username-pattern"
+regex = '''(?i)(Tku\d+)'''
+tags = ["username", "credentials"]
+
+[[rules]]
+description = "Password Pattern"
+id = "password-pattern"  
+regex = '''(?i)(321018miT@@@|password\s*[:=]\s*["\']?[^"\s]{8,}["\']?)'''
+tags = ["password", "credentials"]
+
+[[rules]]
+description = "API Key Pattern"
+id = "api-key-pattern"
+regex = '''(?i)(api[_-]?key\s*[:=]\s*["\']?[a-f0-9]{20,}["\']?)'''
+tags = ["apikey", "secret"]
+
+[[rules]]
+description = "Token Pattern"
+id = "token-pattern"
+regex = '''(?i)(token\s*[:=]\s*["\']?[a-zA-Z0-9]{20,}["\']?)'''
+tags = ["token", "secret"]
+
+# Allowlist for false positives
+[[allowlist]]
+description = "Ignore example credentials"
+regex = '''(your_username|your_password|your_test_username|your_test_password)'''
+
+[[allowlist]]
+description = "Ignore documentation examples"
+path = '''CLAUDE\.md'''
+
+[[allowlist]]
+description = "Ignore environment example file"
+path = '''\.env\.example'''

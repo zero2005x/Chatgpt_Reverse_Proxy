@@ -1,0 +1,11 @@
+{
+  "functions": {
+    "src/app/api/chat/route.ts": {
+      "maxDuration": 30
+    }
+  },
+  "env": {
+    "AI_BASE_URL": "https://dgb01p240102.japaneast.cloudapp.azure.com",
+    "NODE_ENV": "production"
+  }
+}
