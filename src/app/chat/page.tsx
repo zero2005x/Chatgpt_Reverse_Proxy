@@ -30,6 +30,8 @@ function ChatPageContent() {
   });
 
   // 從 URL 參數載入認證信息
+  const [isFromHomepageAuth, setIsFromHomepageAuth] = useState(false);
+  
   useEffect(() => {
     const username = searchParams.get('username');
     const password = searchParams.get('password');
@@ -42,6 +44,9 @@ function ChatPageContent() {
         password,
         baseUrl: baseUrl || 'https://dgb01p240102.japaneast.cloudapp.azure.com'
       });
+      
+      // 標記為來自首頁認證
+      setIsFromHomepageAuth(true);
       
       // 如果 mode 參數為 original 或者有完整的認證信息，設定為原始模式
       if (mode === 'original' || (username && password && baseUrl)) {
@@ -344,6 +349,7 @@ function ChatPageContent() {
           onServiceModeChange={setServiceMode}
           originalServiceCredentials={originalServiceCredentials}
           onOriginalServiceCredentialsChange={setOriginalServiceCredentials}
+          isFromHomepageAuth={isFromHomepageAuth}
         />
 
         {/* 導航按鈕 */}

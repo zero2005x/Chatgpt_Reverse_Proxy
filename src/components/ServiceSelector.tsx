@@ -20,6 +20,8 @@ interface ServiceSelectorProps {
     password: string;
     baseUrl: string;
   }) => void;
+  // 是否來自首頁認證（用於控制認證設定的顯示狀態）
+  isFromHomepageAuth?: boolean;
 }
 
 const SERVICE_MODELS = {
@@ -42,11 +44,13 @@ export default function ServiceSelector({
   serviceMode,
   onServiceModeChange,
   originalServiceCredentials,
-  onOriginalServiceCredentialsChange
+  onOriginalServiceCredentialsChange,
+  isFromHomepageAuth = false
 }: ServiceSelectorProps) {
   const { getAvailableServices, getApiKeyByService } = useApiKeys();
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [showCredentials, setShowCredentials] = useState(true);
+  // 如果來自首頁認證，預設隱藏認證設定；否則顯示
+  const [showCredentials, setShowCredentials] = useState(!isFromHomepageAuth);
   const [temperature, setTemperature] = useState(0.7);
   const [maxTokens, setMaxTokens] = useState(1000);
   const [loginStatus, setLoginStatus] = useState<LoginStatus>({ isLoggedIn: false, status: 'not_checked' });
