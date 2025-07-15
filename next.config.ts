@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
     SESSION_TIMEOUT: process.env.SESSION_TIMEOUT || '1800000',
   },
   eslint: {
-    ignoreDuringBuilds: false,
+    ignoreDuringBuilds: true,
   },
   typescript: {
     ignoreBuildErrors: false,

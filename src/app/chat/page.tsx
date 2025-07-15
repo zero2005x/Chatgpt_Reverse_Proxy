@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useApiKeys } from '@/hooks/useApiKeys';
 import { useChatHistory } from '@/hooks/useChatHistory';
@@ -12,7 +12,7 @@ import ApiKeyModal from '@/components/ApiKeyModal';
 import Link from 'next/link';
 import Papa from 'papaparse';
 
-export default function ChatPage() {
+function ChatPageContent() {
   const searchParams = useSearchParams();
   const [selectedService, setSelectedService] = useState('');
   const [selectedModel, setSelectedModel] = useState('');
@@ -490,5 +490,13 @@ export default function ChatPage() {
         onClose={() => setIsApiKeyModalOpen(false)}
       />
     </div>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">載入中...</div>}>
+      <ChatPageContent />
+    </Suspense>
   );
 }
