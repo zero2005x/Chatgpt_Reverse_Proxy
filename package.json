@@ -1,5 +1,13 @@
 {
   "name": "ai-proxy",
+  "description": "AI Chat Multi-Service Platform - A comprehensive chat platform supporting 27+ AI services",
+  "keywords": ["ai", "chat", "nextjs", "openai", "claude", "gemini", "multi-service"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/ai-proxy.git"
+  },
+  "author": "Your Name",
+  "license": "MIT",
   "version": "0.1.0",
   "private": true,
   "scripts": {

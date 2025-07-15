@@ -20,41 +20,58 @@ This is a comprehensive Next.js-based AI chat platform that provides dual-mode f
 ```
 Chatgpt_Reverse_Proxy/
 ├── src/
-│   └── app/
-│       ├── api/                 # API endpoints
-│       │   ├── chat/route.ts    # Original Portal service
-│       │   ├── ai-chat/route.ts # External AI services
-│       │   ├── check-login/route.ts # Portal authentication
-│       │   └── check-access/route.ts # Portal access verification
-│       ├── chat/                # Multi-service chat interface
-│       │   └── page.tsx
-│       ├── settings/            # API key management
-│       │   └── page.tsx
-│       ├── docs/                # Data format documentation
-│       │   └── page.tsx
-│       ├── layout.tsx           # Root layout component
-│       ├── page.tsx            # Homepage with Portal authentication
-│       └── globals.css         # Global styles
-├── components/                  # React components
-│   ├── ServiceSelector.tsx     # Service/model selection
-│   ├── ChatSidebar.tsx         # Session management
-│   ├── ChatMessage.tsx         # Message display
-│   ├── ChatInput.tsx           # Advanced input with file upload
-│   ├── ApiKeyModal.tsx         # API key setup
-│   └── InfoPanel.tsx           # Service information
-├── hooks/                      # Custom React hooks
-│   ├── useApiKeys.ts           # API key management
-│   ├── useChatHistory.ts       # Chat session management
-│   └── useApiKeyImportExport.ts # Batch operations
-├── types/                      # TypeScript type definitions
-│   └── message.ts
-├── public/                     # Static assets
-├── package.json               # Dependencies and scripts
-├── tsconfig.json             # TypeScript configuration
-├── next.config.ts            # Next.js configuration
-├── eslint.config.mjs         # ESLint configuration
-├── CLAUDE.md                 # Project documentation
-└── .env.example              # Environment variables template
+│   ├── app/
+│   │   ├── api/                 # API endpoints
+│   │   │   ├── chat/route.ts    # Original Portal service
+│   │   │   ├── ai-chat/route.ts # External AI services
+│   │   │   ├── check-login/route.ts # Portal authentication
+│   │   │   └── check-access/route.ts # Portal access verification
+│   │   ├── chat/                # Multi-service chat interface
+│   │   │   └── page.tsx
+│   │   ├── settings/            # API key management
+│   │   │   └── page.tsx
+│   │   ├── docs/                # Data format documentation
+│   │   │   └── page.tsx
+│   │   ├── layout.tsx           # Root layout component
+│   │   ├── page.tsx            # Homepage with Portal authentication
+│   │   ├── globals.css         # Global styles
+│   │   └── favicon.ico         # Favicon
+│   ├── components/              # React components
+│   │   ├── ServiceSelector.tsx  # Service/model selection
+│   │   ├── ChatSidebar.tsx      # Session management
+│   │   ├── ChatMessage.tsx      # Message display
+│   │   ├── ChatInput.tsx        # Advanced input with file upload
+│   │   ├── ApiKeyModal.tsx      # API key setup
+│   │   ├── ApiKeyForm.tsx       # API key form
+│   │   ├── ApiKeyList.tsx       # API key list
+│   │   ├── ApiKeyListItem.tsx   # API key list item
+│   │   ├── ApiKeyImportExport.tsx # Import/export functionality
+│   │   ├── InfoPanel.tsx        # Service information
+│   │   └── InlineChatBox.tsx    # Inline chat component
+│   ├── hooks/                   # Custom React hooks
+│   │   ├── useApiKeys.ts        # API key management
+│   │   ├── useChatHistory.ts    # Chat session management
+│   │   └── useApiKeyImportExport.ts # Batch operations
+│   └── types/                   # TypeScript type definitions
+│       └── message.ts
+├── public/                      # Static assets
+│   ├── file.svg
+│   ├── globe.svg
+│   ├── next.svg
+│   ├── vercel.svg
+│   └── window.svg
+├── package.json                 # Dependencies and scripts
+├── package-lock.json           # Dependency lock file
+├── tsconfig.json               # TypeScript configuration
+├── next.config.ts              # Next.js configuration
+├── eslint.config.mjs           # ESLint configuration
+├── postcss.config.mjs          # PostCSS configuration
+├── vercel.json                 # Vercel deployment configuration
+├── CLAUDE.md                   # Project documentation
+├── README.md                   # Project README
+├── DEPLOYMENT.md               # Deployment guide
+├── .env.example                # Environment variables template
+└── .gitignore                  # Git ignore file
 ```
 
 ## Common Development Commands

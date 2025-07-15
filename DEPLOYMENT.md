@@ -3,7 +3,7 @@
 ## 快速部署到 Vercel
 
 ### 方法一：一鍵部署
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/yourusername/ai-chat-platform)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/yourusername/ai-proxy)
 
 ### 方法二：手動部署
 
@@ -19,7 +19,7 @@ vercel login
 #### 2. 專案設定
 ```bash
 # 進入專案目錄
-cd ai-chat-platform
+cd ai-proxy
 
 # 初始化 Vercel 專案
 vercel
@@ -28,7 +28,7 @@ vercel
 # - Set up and deploy? Y
 # - Which scope? (選擇你的帳戶)
 # - Link to existing project? N
-# - What's your project's name? ai-chat-platform
+# - What's your project's name? ai-proxy
 # - In which directory is your code located? ./
 ```
 
@@ -78,7 +78,7 @@ git add .
 git commit -m "Initial commit: AI Chat Multi-Service Platform"
 
 # 新增遠端倉庫
-git remote add origin https://github.com/yourusername/ai-chat-platform.git
+git remote add origin https://github.com/yourusername/ai-proxy.git
 
 # 推送到 GitHub
 git push -u origin main
@@ -130,6 +130,28 @@ CSP_REPORT_URI=https://your-csp-report-endpoint.com/report
 - 設定適當的快取策略
 
 ## 故障排除
+
+### 常見問題
+
+#### CSP (Content Security Policy) 錯誤
+如果遇到 "Refused to execute inline script" 錯誤：
+
+**解決方案**：
+- 開發環境會自動允許 inline scripts
+- 生產環境使用更嚴格的 CSP 設定
+- 確保 `NODE_ENV` 環境變數設定正確
+
+**驗證方法**：
+```bash
+# 檢查環境變數
+echo $NODE_ENV
+
+# 開發環境
+NODE_ENV=development npm run dev
+
+# 生產環境
+NODE_ENV=production npm run build
+```
 
 ### 常見問題
 
@@ -210,8 +232,8 @@ vercel --prod --alias your-custom-domain.com
 
 ### 常見連結
 - [Vercel 儀表板](https://vercel.com/dashboard)
-- [GitHub 倉庫設定](https://github.com/yourusername/ai-chat-platform/settings)
-- [專案監控](https://vercel.com/yourusername/ai-chat-platform/analytics)
+- [GitHub 倉庫設定](https://github.com/yourusername/ai-proxy/settings)
+- [專案監控](https://vercel.com/yourusername/ai-proxy/analytics)
 
 ---
 

@@ -74,3 +74,16 @@ logs
 api-keys.json
 credentials.json
 secrets.json
+*.key
+*.pem
+*.p12
+*.crt
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Uploads
+uploads/
+temp/

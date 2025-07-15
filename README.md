@@ -51,8 +51,8 @@
 
 1. **複製專案**
 ```bash
-git clone https://github.com/yourusername/ai-chat-platform.git
-cd ai-chat-platform
+git clone https://github.com/yourusername/ai-proxy.git
+cd ai-proxy
 ```
 
 2. **安裝依賴**
@@ -78,7 +78,7 @@ npm run dev
 
 ### 一鍵部署
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/yourusername/ai-chat-platform)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/yourusername/ai-proxy)
 
 ### 手動部署
 
@@ -91,10 +91,26 @@ vercel
 2. **環境變數設定**
 在 Vercel 儀表板中設定以下環境變數：
 ```
-AI_BASE_URL=https://your-ai-service.com
+# Portal Service Configuration
+AI_BASE_URL=https://dgb01p240102.japaneast.cloudapp.azure.com
 TENANT_UUID=your-tenant-uuid
-LOGIN_PATH=/your/login/path
+LOGIN_PATH=/wise/wiseadm/s/subadmin
+
+# Security Settings
 ENCRYPTION_KEY=your-32-character-encryption-key
+MAX_MESSAGE_LENGTH=10000
+MAX_FILE_SIZE=5242880
+RATE_LIMIT_WINDOW=60000
+RATE_LIMIT_MAX_REQUESTS=10
+SESSION_TIMEOUT=1800000
+
+# Application Settings
+NODE_ENV=production
+NEXT_PUBLIC_APP_URL=https://your-domain.vercel.app
+
+# Optional Settings
+LOG_LEVEL=info
+ENABLE_SECURITY_LOGGING=true
 ```
 
 3. **部署**
@@ -209,7 +225,7 @@ src/
 ## 📞 支援
 
 如有問題或建議，請：
-- 開啟 [GitHub Issue](https://github.com/yourusername/ai-chat-platform/issues)
+- 開啟 [GitHub Issue](https://github.com/yourusername/ai-proxy/issues)
 - 查看 [文檔說明](/docs)
 - 檢查 [常見問題](#)
 

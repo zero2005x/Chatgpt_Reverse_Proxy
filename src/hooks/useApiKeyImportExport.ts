@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { ApiKey } from '@/types/message';
 
 export const useApiKeyImportExport = () => {
@@ -140,7 +140,7 @@ export const useApiKeyImportExport = () => {
     }
   };
 
-  const getApiKeyStats = () => {
+  const getApiKeyStats = useCallback(() => {
     try {
       // 檢查是否在客戶端環境
       if (typeof window === 'undefined') {
@@ -157,13 +157,12 @@ export const useApiKeyImportExport = () => {
 
       return {
         total: parsedKeys.length,
-        services: services,
-        lastModified: new Date().toISOString()
+        services: services
       };
     } catch {
       return { total: 0, services: [] };
     }
-  };
+  }, []);
 
   return {
     exportApiKeys,

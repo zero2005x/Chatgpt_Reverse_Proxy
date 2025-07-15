@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Message, ChatSession } from '@/types/message';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -7,12 +7,7 @@ export function useChatHistory() {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // 載入聊天紀錄
-  useEffect(() => {
-    loadSessions();
-  }, []);
-
-  const loadSessions = () => {
+  const loadSessions = useCallback(() => {
     try {
       const savedSessions = localStorage.getItem('chatSessions');
       if (savedSessions) {
@@ -27,7 +22,12 @@ export function useChatHistory() {
     } catch (error) {
       console.error('載入聊天紀錄失敗:', error);
     }
-  };
+  }, [currentSessionId]);
+
+  // 載入聊天紀錄
+  useEffect(() => {
+    loadSessions();
+  }, [loadSessions]);
 
   const saveSessions = (newSessions: ChatSession[]) => {
     try {

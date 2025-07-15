@@ -86,7 +86,7 @@ function ChatPageContent() {
     if (!currentSessionId && sessions.length === 0) {
       createNewSession();
     }
-  }, [currentSessionId, sessions.length]);
+  }, [currentSessionId, sessions.length, createNewSession]);
 
   const handleSendMessage = async (message: string) => {
     if (serviceMode === 'original') {

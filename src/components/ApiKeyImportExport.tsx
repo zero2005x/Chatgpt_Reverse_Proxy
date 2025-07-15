@@ -26,8 +26,10 @@ export default function ApiKeyImportExport() {
   // 確保只在客戶端渲染時載入統計資料
   useEffect(() => {
     setIsClient(true);
-    updateStats();
-  }, [updateStats]);
+    if (typeof window !== 'undefined') {
+      setStats(getApiKeyStats());
+    }
+  }, [getApiKeyStats]);
 
   // 當有訊息更新時，重新載入統計資料
   useEffect(() => {
