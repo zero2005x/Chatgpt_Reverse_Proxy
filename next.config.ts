@@ -52,8 +52,8 @@ const nextConfig: NextConfig = {
             value: [
               "default-src 'self'",
               process.env.NODE_ENV === 'development' 
-                ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' http://gc.kis.v2.scr.kaspersky-labs.com ws://gc.kis.v2.scr.kaspersky-labs.com"
-                : "script-src 'self' 'unsafe-eval'",
+                ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://gc.kis.v2.scr.kaspersky-labs.com ws://gc.kis.v2.scr.kaspersky-labs.com"
+                : "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://gc.kis.v2.scr.kaspersky-labs.com",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https:",
               "font-src 'self' data:",
