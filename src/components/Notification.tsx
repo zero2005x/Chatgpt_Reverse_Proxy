@@ -1,0 +1,155 @@
+import { useState, useEffect } from 'react';
+
+interface NotificationProps {
+  type: 'success' | 'error' | 'warning' | 'info';
+  title: string;
+  message: string;
+  duration?: number;
+  onClose?: () => void;
+  className?: string;
+}
+
+export default function Notification({
+  type,
+  title,
+  message,
+  duration = 5000,
+  onClose,
+  className = ''
+}: NotificationProps) {
+  const [isVisible, setIsVisible] = useState(true);
+
+  useEffect(() => {
+    if (duration > 0) {
+      const timer = setTimeout(() => {
+        setIsVisible(false);
+        setTimeout(() => onClose?.(), 300);
+      }, duration);
+
+      return () => clearTimeout(timer);
+    }
+  }, [duration, onClose]);
+
+  const handleClose = () => {
+    setIsVisible(false);
+    setTimeout(() => onClose?.(), 300);
+  };
+
+  const typeConfig = {
+    success: {
+      bgColor: 'bg-green-50',
+      borderColor: 'border-green-200',
+      textColor: 'text-green-800',
+      iconColor: 'text-green-600',
+      icon: '✅'
+    },
+    error: {
+      bgColor: 'bg-red-50',
+      borderColor: 'border-red-200',
+      textColor: 'text-red-800',
+      iconColor: 'text-red-600',
+      icon: '❌'
+    },
+    warning: {
+      bgColor: 'bg-yellow-50',
+      borderColor: 'border-yellow-200',
+      textColor: 'text-yellow-800',
+      iconColor: 'text-yellow-600',
+      icon: '⚠️'
+    },
+    info: {
+      bgColor: 'bg-blue-50',
+      borderColor: 'border-blue-200',
+      textColor: 'text-blue-800',
+      iconColor: 'text-blue-600',
+      icon: 'ℹ️'
+    }
+  };
+
+  const config = typeConfig[type];
+
+  return (
+    <div
+      className={`fixed top-4 right-4 z-50 transition-all duration-300 transform ${
+        isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
+      } ${className}`}
+    >
+      <div className={`max-w-md w-full ${config.bgColor} border ${config.borderColor} rounded-lg shadow-lg`}>
+        <div className="p-4">
+          <div className="flex items-start">
+            <div className={`flex-shrink-0 ${config.iconColor} text-lg mr-3`}>
+              {config.icon}
+            </div>
+            <div className="flex-1">
+              <h3 className={`text-sm font-medium ${config.textColor}`}>
+                {title}
+              </h3>
+              <p className={`mt-1 text-sm ${config.textColor} opacity-90`}>
+                {message}
+              </p>
+            </div>
+            <button
+              onClick={handleClose}
+              className={`ml-3 inline-flex ${config.textColor} hover:opacity-75 transition-opacity`}
+            >
+              <span className="sr-only">關閉</span>
+              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fillRule="evenodd"
+                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 通知管理 Hook
+export function useNotification() {
+  const [notifications, setNotifications] = useState<Array<{
+    id: string;
+    type: 'success' | 'error' | 'warning' | 'info';
+    title: string;
+    message: string;
+    duration?: number;
+  }>>([]);
+
+  const addNotification = (notification: Omit<typeof notifications[0], 'id'>) => {
+    const id = Date.now().toString();
+    setNotifications(prev => [...prev, { ...notification, id }]);
+  };
+
+  const removeNotification = (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
+
+  const showSuccess = (title: string, message: string) => {
+    addNotification({ type: 'success', title, message });
+  };
+
+  const showError = (title: string, message: string) => {
+    addNotification({ type: 'error', title, message });
+  };
+
+  const showWarning = (title: string, message: string) => {
+    addNotification({ type: 'warning', title, message });
+  };
+
+  const showInfo = (title: string, message: string) => {
+    addNotification({ type: 'info', title, message });
+  };
+
+  return {
+    notifications,
+    addNotification,
+    removeNotification,
+    showSuccess,
+    showError,
+    showWarning,
+    showInfo
+  };
+}

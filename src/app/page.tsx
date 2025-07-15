@@ -4,6 +4,10 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { LoginStatus, PortalAccess } from '@/types/message';
 import InlineChatBox from '@/components/InlineChatBox';
+import NavigationHeader from '@/components/NavigationHeader';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import Notification, { useNotification } from '@/components/Notification';
+import ServiceStatusIndicator from '@/components/ServiceStatusIndicator';
 
 export default function Home() {
   const [username, setUsername] = useState('');
@@ -13,10 +17,11 @@ export default function Home() {
   const [portalAccess, setPortalAccess] = useState<PortalAccess>({ hasAccess: false, status: 'not_checked' });
   const [isLoading, setIsLoading] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const { notifications, showSuccess, showError, removeNotification } = useNotification();
 
   const handleCheckLogin = async () => {
     if (!username || !password) {
-      alert('請輸入用戶名和密碼');
+      showError('輸入錯誤', '請輸入用戶名和密碼');
       return;
     }
 
@@ -34,12 +39,20 @@ export default function Home() {
 
       const data = await response.json();
       setLoginStatus(data);
+      
+      if (data.status === 'success') {
+        showSuccess('登入成功', '用戶驗證通過');
+      } else if (data.status === 'failed') {
+        showError('登入失敗', data.message || '請檢查用戶名和密碼');
+      }
     } catch (error) {
+      const errorMessage = '檢查登入狀態時發生錯誤';
       setLoginStatus({ 
         isLoggedIn: false, 
         status: 'failed', 
-        message: '檢查登入狀態時發生錯誤' 
+        message: errorMessage 
       });
+      showError('連接錯誤', errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -47,7 +60,7 @@ export default function Home() {
 
   const handleCheckAccess = async () => {
     if (!username || !password) {
-      alert('請輸入用戶名和密碼');
+      showError('輸入錯誤', '請輸入用戶名和密碼');
       return;
     }
 
@@ -65,37 +78,31 @@ export default function Home() {
 
       const data = await response.json();
       setPortalAccess(data);
+      
+      if (data.status === 'success') {
+        showSuccess('存取驗證成功', '已取得Portal存取權限');
+      } else if (data.status === 'failed') {
+        showError('存取驗證失敗', data.message || '無法取得Portal存取權限');
+      }
     } catch (error) {
+      const errorMessage = '檢查存取權限時發生錯誤';
       setPortalAccess({ 
         hasAccess: false, 
         status: 'failed', 
-        message: '檢查存取權限時發生錯誤' 
+        message: errorMessage 
       });
+      showError('連接錯誤', errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'pending': return '⏳';
-      case 'success': return '✅';
-      case 'failed': return '❌';
-      default: return '❓';
-    }
-  };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            AI Chat 反向代理系統
-          </h1>
-          <p className="text-gray-600">
-            多AI服務聊天平台，支援原始Portal服務和各大AI供應商
-          </p>
-        </div>
+    <div className="min-h-screen bg-gray-50">
+      <NavigationHeader title="AI Chat 反向代理系統" />
+      
+      <div className="max-w-4xl mx-auto px-4 py-8">
 
         {/* 導航按鈕 */}
         <div className="flex justify-center space-x-4 mb-8">
@@ -180,45 +187,39 @@ export default function Home() {
               <button
                 onClick={handleCheckLogin}
                 disabled={isLoading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isLoading ? '檢查中...' : '檢查登入狀態'}
+                {isLoading && <LoadingSpinner size="sm" text="" />}
+                <span>檢查登入狀態</span>
               </button>
               
               <button
                 onClick={handleCheckAccess}
                 disabled={isLoading}
-                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="inline-flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isLoading ? '檢查中...' : '檢查存取權限'}
+                {isLoading && <LoadingSpinner size="sm" text="" />}
+                <span>檢查存取權限</span>
               </button>
             </div>
 
             {/* 狀態顯示 */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200">
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="font-medium text-gray-800 mb-2">
-                  {getStatusIcon(loginStatus.status)} 登入狀態
-                </h3>
-                <p className="text-sm text-gray-600">
-                  {loginStatus.status === 'not_checked' && '尚未檢查'}
-                  {loginStatus.status === 'pending' && '檢查中...'}
-                  {loginStatus.status === 'success' && '登入成功'}
-                  {loginStatus.status === 'failed' && (loginStatus.message || '登入失敗')}
-                </p>
-              </div>
+              <ServiceStatusIndicator
+                service="登入狀態"
+                status={loginStatus.status === 'success' ? 'ready' : 
+                       loginStatus.status === 'pending' ? 'loading' : 
+                       loginStatus.status === 'failed' ? 'error' : 'not-configured'}
+                message={loginStatus.message}
+              />
 
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="font-medium text-gray-800 mb-2">
-                  {getStatusIcon(portalAccess.status)} Portal 存取狀態
-                </h3>
-                <p className="text-sm text-gray-600">
-                  {portalAccess.status === 'not_checked' && '尚未檢查'}
-                  {portalAccess.status === 'pending' && '檢查中...'}
-                  {portalAccess.status === 'success' && '允許存取'}
-                  {portalAccess.status === 'failed' && (portalAccess.message || '拒絕存取')}
-                </p>
-              </div>
+              <ServiceStatusIndicator
+                service="Portal 存取"
+                status={portalAccess.status === 'success' ? 'ready' : 
+                       portalAccess.status === 'pending' ? 'loading' : 
+                       portalAccess.status === 'failed' ? 'error' : 'not-configured'}
+                message={portalAccess.message}
+              />
             </div>
 
             {/* 資料列表 */}
@@ -291,6 +292,20 @@ export default function Home() {
           baseUrl
         }}
       />
+
+      {/* 通知容器 */}
+      <div className="fixed top-4 right-4 z-50 space-y-2">
+        {notifications.map((notification) => (
+          <Notification
+            key={notification.id}
+            type={notification.type}
+            title={notification.title}
+            message={notification.message}
+            duration={notification.duration}
+            onClose={() => removeNotification(notification.id)}
+          />
+        ))}
+      </div>
     </div>
   );
 }

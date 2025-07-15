@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useApiKeys } from '@/hooks/useApiKeys';
 import { LoginStatus, PortalAccess } from '@/types/message';
+import ServiceStatusIndicator from './ServiceStatusIndicator';
+import { HelpIcon } from './Tooltip';
 
 interface ServiceSelectorProps {
   selectedService: string;
@@ -198,14 +200,6 @@ export default function ServiceSelector({
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'pending': return '⏳';
-      case 'success': return '✅';
-      case 'failed': return '❌';
-      default: return '❓';
-    }
-  };
 
   return (
     <div className="border-b border-gray-200 p-4 bg-white">
@@ -323,29 +317,21 @@ export default function ServiceSelector({
 
               {/* 狀態顯示 */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-white rounded-lg p-3 border border-gray-200">
-                  <h4 className="font-medium text-gray-800 mb-1 text-sm">
-                    {getStatusIcon(loginStatus.status)} 登入狀態
-                  </h4>
-                  <p className="text-xs text-gray-600">
-                    {loginStatus.status === 'not_checked' && '尚未檢查'}
-                    {loginStatus.status === 'pending' && '檢查中...'}
-                    {loginStatus.status === 'success' && '登入成功'}
-                    {loginStatus.status === 'failed' && (loginStatus.message || '登入失敗')}
-                  </p>
-                </div>
+                <ServiceStatusIndicator
+                  service="登入狀態"
+                  status={loginStatus.status === 'success' ? 'ready' : 
+                         loginStatus.status === 'pending' ? 'loading' : 
+                         loginStatus.status === 'failed' ? 'error' : 'not-configured'}
+                  message={loginStatus.message}
+                />
 
-                <div className="bg-white rounded-lg p-3 border border-gray-200">
-                  <h4 className="font-medium text-gray-800 mb-1 text-sm">
-                    {getStatusIcon(portalAccess.status)} Portal 存取狀態
-                  </h4>
-                  <p className="text-xs text-gray-600">
-                    {portalAccess.status === 'not_checked' && '尚未檢查'}
-                    {portalAccess.status === 'pending' && '檢查中...'}
-                    {portalAccess.status === 'success' && '允許存取'}
-                    {portalAccess.status === 'failed' && (portalAccess.message || '拒絕存取')}
-                  </p>
-                </div>
+                <ServiceStatusIndicator
+                  service="Portal 存取"
+                  status={portalAccess.status === 'success' ? 'ready' : 
+                         portalAccess.status === 'pending' ? 'loading' : 
+                         portalAccess.status === 'failed' ? 'error' : 'not-configured'}
+                  message={portalAccess.message}
+                />
               </div>
 
               {/* 資料列表 */}
@@ -377,8 +363,9 @@ export default function ServiceSelector({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* 服務選擇 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              選擇 AI 服務
+            <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+              <span>選擇 AI 服務</span>
+              <HelpIcon tooltip="選擇要使用的 AI 服務提供商，需要先在設定頁面添加對應的 API Key" />
             </label>
             <select
               value={selectedService}
@@ -397,6 +384,27 @@ export default function ServiceSelector({
               ))}
             </select>
             
+            {/* 顯示所有可用服務的狀態 */}
+            {availableServices.length > 0 && (
+              <div className="mt-3 space-y-2">
+                <h4 className="text-xs font-medium text-gray-500">服務狀態</h4>
+                <div className="grid grid-cols-1 gap-2">
+                  {availableServices.slice(0, 3).map((service) => (
+                    <ServiceStatusIndicator
+                      key={service.service}
+                      service={service.label}
+                      status={hasApiKey(service.service) ? 'ready' : 'not-configured'}
+                      message={hasApiKey(service.service) ? '已設定 API Key' : '需要設定 API Key'}
+                      className="text-xs"
+                    />
+                  ))}
+                  {availableServices.length > 3 && (
+                    <p className="text-xs text-gray-500">還有 {availableServices.length - 3} 個服務...</p>
+                  )}
+                </div>
+              </div>
+            )}
+            
             {selectedService && !hasApiKey(selectedService) && (
               <p className="text-sm text-red-600 mt-1">
                 請先在設定頁面添加此服務的 API Key
@@ -407,8 +415,9 @@ export default function ServiceSelector({
           {/* 模型選擇 */}
           {selectedService && currentModels.length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                選擇模型
+              <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+                <span>選擇模型</span>
+                <HelpIcon tooltip="選擇要使用的具體 AI 模型，不同模型有不同的能力和價格" />
               </label>
               <select
                 value={selectedModel || ''}
@@ -434,8 +443,9 @@ export default function ServiceSelector({
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Temperature (創意度): {temperature}
+              <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+                <span>Temperature (創意度): {temperature}</span>
+                <HelpIcon tooltip="控制 AI 回應的創意程度，數值越高越有創意，但可能不夠穩定" />
               </label>
               <input
                 type="range"
@@ -454,8 +464,9 @@ export default function ServiceSelector({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                最大 Token 數: {maxTokens}
+              <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+                <span>最大 Token 數: {maxTokens}</span>
+                <HelpIcon tooltip="限制 AI 回應的最大長度，數值越高回應越長，但會增加成本" />
               </label>
               <input
                 type="range"

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
+import NavigationHeader from '@/components/NavigationHeader';
 
 export default function DocsPage() {
   const [activeTab, setActiveTab] = useState<'json' | 'csv' | 'xlsx'>('json');
@@ -78,39 +78,10 @@ AI 對話範例\t你好，請介紹一下你自己\t您好！我是 AI 助手，
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-6xl mx-auto px-4">
-        {/* 標題 */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            資料結構說明
-          </h1>
-          <p className="text-gray-600">
-            聊天記錄與 API Key 的匯入匯出格式說明
-          </p>
-        </div>
-
-        {/* 導航 */}
-        <div className="flex justify-center space-x-4 mb-8">
-          <Link
-            href="/"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            回到首頁
-          </Link>
-          <Link
-            href="/chat"
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-          >
-            開始聊天
-          </Link>
-          <Link
-            href="/settings"
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-          >
-            API 設定
-          </Link>
-        </div>
+    <div className="min-h-screen bg-gray-50">
+      <NavigationHeader title="資料結構說明" />
+      
+      <div className="max-w-6xl mx-auto px-4 py-8">
 
         {/* 聊天記錄格式 */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-8">

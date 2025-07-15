@@ -37,17 +37,22 @@ Chatgpt_Reverse_Proxy/
 │   │   ├── globals.css         # Global styles
 │   │   └── favicon.ico         # Favicon
 │   ├── components/              # React components
-│   │   ├── ServiceSelector.tsx  # Service/model selection
+│   │   ├── ServiceSelector.tsx  # Service/model selection with status indicators
 │   │   ├── ChatSidebar.tsx      # Session management
 │   │   ├── ChatMessage.tsx      # Message display
 │   │   ├── ChatInput.tsx        # Advanced input with file upload
 │   │   ├── ApiKeyModal.tsx      # API key setup
-│   │   ├── ApiKeyForm.tsx       # API key form
+│   │   ├── ApiKeyForm.tsx       # API key form with tooltips
 │   │   ├── ApiKeyList.tsx       # API key list
 │   │   ├── ApiKeyListItem.tsx   # API key list item
 │   │   ├── ApiKeyImportExport.tsx # Import/export functionality
 │   │   ├── InfoPanel.tsx        # Service information
-│   │   └── InlineChatBox.tsx    # Inline chat component
+│   │   ├── InlineChatBox.tsx    # Inline chat component
+│   │   ├── NavigationHeader.tsx # Unified navigation header
+│   │   ├── LoadingSpinner.tsx   # Loading states and spinner
+│   │   ├── Notification.tsx     # Toast notification system
+│   │   ├── ServiceStatusIndicator.tsx # Visual service status
+│   │   └── Tooltip.tsx          # Interactive help tooltips
 │   ├── hooks/                   # Custom React hooks
 │   │   ├── useApiKeys.ts        # API key management
 │   │   ├── useChatHistory.ts    # Chat session management

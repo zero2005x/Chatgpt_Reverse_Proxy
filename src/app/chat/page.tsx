@@ -11,6 +11,8 @@ import ServiceSelector from '@/components/ServiceSelector';
 import ApiKeyModal from '@/components/ApiKeyModal';
 import Link from 'next/link';
 import Papa from 'papaparse';
+import NavigationHeader from '@/components/NavigationHeader';
+import Notification, { useNotification } from '@/components/Notification';
 
 function ChatPageContent() {
   const searchParams = useSearchParams();
@@ -20,6 +22,7 @@ function ChatPageContent() {
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
+  const { notifications, showSuccess, showError, removeNotification } = useNotification();
   
   // 服務模式狀態
   const [serviceMode, setServiceMode] = useState<'original' | 'external'>('external');
@@ -153,13 +156,13 @@ function ChatPageContent() {
     } else {
       // 外部服務模式
       if (!selectedService) {
-        setError('請先選擇 AI 服務');
+        showError('服務未選擇', '請先選擇 AI 服務');
         return;
       }
 
       const apiKey = getApiKeyByService(selectedService);
       if (!apiKey) {
-        setError('請先在設定頁面添加此服務的 API Key');
+        showError('API Key 未設定', '請先在設定頁面添加此服務的 API Key');
         return;
       }
     }
@@ -243,7 +246,9 @@ function ChatPageContent() {
       }
 
     } catch (err) {
-      setError(err instanceof Error ? err.message : '發生未知錯誤');
+      const errorMessage = err instanceof Error ? err.message : '發生未知錯誤';
+      setError(errorMessage);
+      showError('發送失敗', errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -259,9 +264,9 @@ function ChatPageContent() {
         try {
           const data = JSON.parse(e.target?.result as string);
           const importedCount = importSessions(data);
-          alert(`成功匯入 ${importedCount} 個對話`);
+          showSuccess('匯入成功', `成功匯入 ${importedCount} 個對話`);
         } catch (error) {
-          alert('匯入失敗：JSON 格式不正確');
+          showError('匯入失敗', 'JSON 格式不正確');
         }
       };
       reader.readAsText(file);
@@ -295,14 +300,14 @@ function ChatPageContent() {
             }));
 
             const importedCount = importSessions(sessions);
-            alert(`成功匯入 ${importedCount} 個對話`);
+            showSuccess('匯入成功', `成功匯入 ${importedCount} 個對話`);
           } catch (error) {
-            alert('匯入失敗：CSV 格式不正確');
+            showError('匯入失敗', 'CSV 格式不正確');
           }
         }
       });
     } else {
-      alert('不支援的檔案格式，請使用 JSON 或 CSV 格式');
+      showError('格式不支援', '不支援的檔案格式，請使用 JSON 或 CSV 格式');
     }
   };
 
@@ -317,6 +322,8 @@ function ChatPageContent() {
     linkElement.setAttribute('href', dataUri);
     linkElement.setAttribute('download', exportFileDefaultName);
     linkElement.click();
+    
+    showSuccess('匯出成功', '聊天記錄已成功匯出');
   };
 
   const canSendMessage = serviceMode === 'original' 
@@ -324,9 +331,12 @@ function ChatPageContent() {
     : selectedService && getApiKeyByService(selectedService) && !isLoading;
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* 側邊欄 */}
-      <ChatSidebar
+    <div className="flex flex-col h-screen bg-gray-100">
+      <NavigationHeader title="AI 聊天" />
+      
+      <div className="flex flex-1 overflow-hidden">
+        {/* 側邊欄 */}
+        <ChatSidebar
         sessions={sessions}
         currentSessionId={currentSessionId}
         onSessionSelect={setCurrentSessionId}
@@ -337,8 +347,8 @@ function ChatPageContent() {
         onExportSessions={handleExportSessions}
       />
 
-      {/* 主要聊天區域 */}
-      <div className="flex-1 flex flex-col">
+        {/* 主要聊天區域 */}
+        <div className="flex-1 flex flex-col">
         {/* 服務選擇器 */}
         <ServiceSelector
           selectedService={selectedService}
@@ -488,6 +498,7 @@ function ChatPageContent() {
                   : "輸入您的訊息... (Shift+Enter 換行)"
           }
         />
+        </div>
       </div>
 
       {/* API Key Modal */}
@@ -495,6 +506,20 @@ function ChatPageContent() {
         isOpen={isApiKeyModalOpen}
         onClose={() => setIsApiKeyModalOpen(false)}
       />
+
+      {/* 通知容器 */}
+      <div className="fixed top-4 right-4 z-50 space-y-2">
+        {notifications.map((notification) => (
+          <Notification
+            key={notification.id}
+            type={notification.type}
+            title={notification.title}
+            message={notification.message}
+            duration={notification.duration}
+            onClose={() => removeNotification(notification.id)}
+          />
+        ))}
+      </div>
     </div>
   );
 }

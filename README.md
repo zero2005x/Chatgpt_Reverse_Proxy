@@ -37,9 +37,13 @@
 
 ### 📱 使用者介面
 - **響應式設計**：支援桌面和行動裝置
+- **統一導航**：一致的頁面導航體驗
 - **即時對話**：流暢的聊天體驗
 - **服務切換**：輕鬆切換不同 AI 服務
 - **狀態監控**：即時顯示服務狀態
+- **智能通知**：優雅的成功/錯誤提示
+- **載入狀態**：清晰的操作反饋
+- **互動幫助**：上下文相關的提示和說明
 
 ## 🚀 快速開始
 
@@ -51,8 +55,8 @@
 
 1. **複製專案**
 ```bash
-git clone https://github.com/yourusername/ai-proxy.git
-cd ai-proxy
+git clone https://github.com/yourusername/Chatgpt_Reverse_Proxy.git
+cd Chatgpt_Reverse_Proxy
 ```
 
 2. **安裝依賴**
@@ -78,7 +82,7 @@ npm run dev
 
 ### 一鍵部署
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/yourusername/ai-proxy)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/yourusername/Chatgpt_Reverse_Proxy)
 
 ### 手動部署
 

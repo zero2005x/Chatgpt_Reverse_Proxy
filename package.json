@@ -4,7 +4,7 @@
   "keywords": ["ai", "chat", "nextjs", "openai", "claude", "gemini", "multi-service"],
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/ai-proxy.git"
+    "url": "https://github.com/yourusername/Chatgpt_Reverse_Proxy.git"
   },
   "author": "Your Name",
   "license": "MIT",

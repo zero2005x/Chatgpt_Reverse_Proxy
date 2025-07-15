@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ApiKey } from '@/types/message';
+import { HelpIcon } from './Tooltip';
 
 const AI_SERVICES = {
   '國際': [
@@ -83,8 +84,9 @@ export default function ApiKeyForm({ onAddApiKey, isLoading = false }: ApiKeyFor
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label htmlFor="service" className="block text-sm font-medium text-gray-700 mb-1">
-              AI 服務
+            <label htmlFor="service" className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-1">
+              <span>AI 服務</span>
+              <HelpIcon tooltip="選擇要添加 API Key 的 AI 服務提供商" />
             </label>
             <select
               id="service"
@@ -105,8 +107,9 @@ export default function ApiKeyForm({ onAddApiKey, isLoading = false }: ApiKeyFor
           </div>
           
           <div>
-            <label htmlFor="label" className="block text-sm font-medium text-gray-700 mb-1">
-              標籤 (可選)
+            <label htmlFor="label" className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-1">
+              <span>標籤 (可選)</span>
+              <HelpIcon tooltip="為此 API Key 設定一個易識別的標籤，便於管理" />
             </label>
             <input
               id="label"
@@ -119,8 +122,9 @@ export default function ApiKeyForm({ onAddApiKey, isLoading = false }: ApiKeyFor
           </div>
           
           <div>
-            <label htmlFor="key" className="block text-sm font-medium text-gray-700 mb-1">
-              API Key
+            <label htmlFor="key" className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-1">
+              <span>API Key</span>
+              <HelpIcon tooltip="輸入從 AI 服務提供商獲取的 API Key，這將被安全加密儲存" />
             </label>
             <div className="flex gap-2">
               <input
