@@ -4,6 +4,13 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   env: {
     AI_BASE_URL: process.env.AI_BASE_URL || 'https://dgb01p240102.japaneast.cloudapp.azure.com',
+    TENANT_UUID: process.env.TENANT_UUID || '2595af81-c151-47eb-9f15-d17e0adbe3b4',
+    LOGIN_PATH: process.env.LOGIN_PATH || '/wise/wiseadm/s/subadmin',
+    MAX_MESSAGE_LENGTH: process.env.MAX_MESSAGE_LENGTH || '10000',
+    MAX_FILE_SIZE: process.env.MAX_FILE_SIZE || '5242880',
+    RATE_LIMIT_WINDOW: process.env.RATE_LIMIT_WINDOW || '60000',
+    RATE_LIMIT_MAX_REQUESTS: process.env.RATE_LIMIT_MAX_REQUESTS || '10',
+    SESSION_TIMEOUT: process.env.SESSION_TIMEOUT || '1800000',
   },
   eslint: {
     ignoreDuringBuilds: false,
@@ -14,7 +21,7 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: '/api/(.*)',
+        source: '/(.*)',
         headers: [
           {
             key: 'X-Content-Type-Options',
@@ -40,10 +47,30 @@ const nextConfig: NextConfig = {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=()',
           },
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: https:",
+              "font-src 'self' data:",
+              "connect-src 'self' https:",
+              "frame-ancestors 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+            ].join('; '),
+          },
         ],
       },
     ];
   },
+  
+  // 生產環境優化
+  ...(process.env.NODE_ENV === 'production' && {
+    poweredByHeader: false,
+    compress: true,
+  }),
 };
 
 export default nextConfig;
