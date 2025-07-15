@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Message, LoginStatus, PortalAccess } from '@/types/message';
 import { useApiKeys } from '@/hooks/useApiKeys';
 import ChatMessage from './ChatMessage';
@@ -11,7 +11,7 @@ interface InlineChatBoxProps {
     username: string;
     password: string;
     baseUrl: string;
-  };
+  } | null;
 }
 
 export default function InlineChatBox({ isOpen, onToggle, credentials }: InlineChatBoxProps) {
@@ -26,6 +26,11 @@ export default function InlineChatBox({ isOpen, onToggle, credentials }: InlineC
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { getAvailableServices, getApiKeyByService } = useApiKeys();
 
+  // Memoize available services to prevent infinite re-renders
+  const availableServices = useMemo(() => {
+    return getAvailableServices();
+  }, [getAvailableServices]);
+
   useEffect(() => {
     if (isOpen) {
       scrollToBottom();
@@ -36,10 +41,8 @@ export default function InlineChatBox({ isOpen, onToggle, credentials }: InlineC
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const availableServices = getAvailableServices();
-
   const checkPortalAuth = async () => {
-    if (!credentials.username || !credentials.password) {
+    if (!credentials?.username || !credentials?.password) {
       setError('請先填寫用戶名和密碼');
       return false;
     }
@@ -115,7 +118,7 @@ export default function InlineChatBox({ isOpen, onToggle, credentials }: InlineC
   const handleSendMessage = async (message: string) => {
     // 檢查是否有任何可用的認證方式
     if (serviceMode === 'portal') {
-      if (!credentials.username || !credentials.password) {
+      if (!credentials?.username || !credentials?.password) {
         showAuthRequiredModal();
         return;
       }
@@ -151,6 +154,11 @@ export default function InlineChatBox({ isOpen, onToggle, credentials }: InlineC
       let data;
 
       if (serviceMode === 'portal') {
+        // Ensure credentials exist before using them
+        if (!credentials?.username || !credentials?.password) {
+          throw new Error('Portal 認證信息不完整');
+        }
+
         // 呼叫原始服務 API
         response = await fetch('/api/chat', {
           method: 'POST',
@@ -232,7 +240,7 @@ export default function InlineChatBox({ isOpen, onToggle, credentials }: InlineC
   };
 
   const canSendMessage = !isLoading && (
-    (serviceMode === 'portal' && credentials.username && credentials.password) ||
+    (serviceMode === 'portal' && credentials?.username && credentials?.password) ||
     (serviceMode === 'api' && isApiReady())
   );
 
@@ -340,7 +348,7 @@ export default function InlineChatBox({ isOpen, onToggle, credentials }: InlineC
               disabled={!canSendMessage}
               placeholder={
                 serviceMode === 'portal' 
-                  ? (!credentials.username || !credentials.password ? "請先填寫用戶名和密碼" : "輸入您的訊息...")
+                  ? (!credentials?.username || !credentials?.password ? "請先填寫用戶名和密碼" : "輸入您的訊息...")
                   : (!isApiReady() ? "請先設定 API Key" : "輸入您的訊息...")
               }
             />

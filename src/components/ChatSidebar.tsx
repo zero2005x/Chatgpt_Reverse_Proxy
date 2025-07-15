@@ -56,18 +56,18 @@ export default function ChatSidebar({
   };
 
   return (
-    <div className="w-64 bg-gray-50 border-r border-gray-200 flex flex-col h-full">
+    <div className="w-64 lg:w-72 xl:w-80 bg-gray-50 border-r border-gray-200 flex flex-col h-full">
       {/* 頂部按鈕 */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-3 border-b border-gray-200">
         <button
           onClick={onNewSession}
-          className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mb-2"
+          className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mb-2 text-sm"
         >
           新增對話
         </button>
         
-        <div className="flex space-x-2">
-          <label className="flex-1 px-3 py-2 bg-green-600 text-white rounded text-sm text-center cursor-pointer hover:bg-green-700 transition-colors">
+        <div className="flex space-x-1">{/* 縮小按鈕間距 */}
+          <label className="flex-1 px-2 py-1.5 bg-green-600 text-white rounded text-xs text-center cursor-pointer hover:bg-green-700 transition-colors">
             匯入
             <input
               type="file"
@@ -78,7 +78,7 @@ export default function ChatSidebar({
           </label>
           <button
             onClick={onExportSessions}
-            className="flex-1 px-3 py-2 bg-gray-600 text-white rounded text-sm hover:bg-gray-700 transition-colors"
+            className="flex-1 px-2 py-1.5 bg-gray-600 text-white rounded text-xs hover:bg-gray-700 transition-colors"
           >
             匯出
           </button>

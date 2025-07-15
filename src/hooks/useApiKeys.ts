@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ApiKey } from '@/types/message';
 
 // 簡單的加密/解密函數（用於客戶端儲存）
@@ -85,16 +85,16 @@ export function useApiKeys() {
     saveApiKeys(updatedKeys);
   };
 
-  const getApiKeyByService = (service: string) => {
+  const getApiKeyByService = useCallback((service: string) => {
     return apiKeys.find(key => key.service === service);
-  };
+  }, [apiKeys]);
 
-  const getAvailableServices = () => {
+  const getAvailableServices = useCallback(() => {
     return apiKeys.map(key => ({
       service: key.service,
       label: key.label || key.service.toUpperCase()
     }));
-  };
+  }, [apiKeys]);
 
   return {
     apiKeys,

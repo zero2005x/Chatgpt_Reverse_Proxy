@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useApiKeys } from '@/hooks/useApiKeys';
 import { useChatHistory } from '@/hooks/useChatHistory';
+import { usePortalAuth } from '@/hooks/usePortalAuth';
 import ChatMessage from '@/components/ChatMessage';
 import ChatInput from '@/components/ChatInput';
 import ChatSidebar from '@/components/ChatSidebar';
@@ -24,39 +25,64 @@ function ChatPageContent() {
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
   const { notifications, showSuccess, showError, removeNotification } = useNotification();
   
-  // 服務模式狀態
+  // 使用 Portal 認證 hook
+  const {
+    credentials,
+    loginStatus,
+    portalAccess,
+    isFromHomepageAuth,
+    updateCredentials,
+    extendSession,
+    consumeIsFromHomepageAuth
+  } = usePortalAuth();
+  
+  // 服務模式狀態 - 預設使用外部服務，只有當明確從認證頁面跳轉時才顯示原始服務
   const [serviceMode, setServiceMode] = useState<'original' | 'external'>('external');
+  const [showOriginalService, setShowOriginalService] = useState(false);
   const [originalServiceCredentials, setOriginalServiceCredentials] = useState({
-    username: '',
-    password: '',
-    baseUrl: 'https://dgb01p240102.japaneast.cloudapp.azure.com'
+    username: credentials?.username || '',
+    password: credentials?.password || '',
+    baseUrl: credentials?.baseUrl || 'https://dgb01p240102.japaneast.cloudapp.azure.com'
   });
 
-  // 從 URL 參數載入認證信息
-  const [isFromHomepageAuth, setIsFromHomepageAuth] = useState(false);
-  
+  // 初始化時設定服務模式
   useEffect(() => {
-    const username = searchParams.get('username');
-    const password = searchParams.get('password');
-    const baseUrl = searchParams.get('baseUrl');
     const mode = searchParams.get('mode');
     
-    if (username && password) {
+    // 如果有持久化的認證信息，使用它
+    if (credentials) {
       setOriginalServiceCredentials({
-        username,
-        password,
-        baseUrl: baseUrl || 'https://dgb01p240102.japaneast.cloudapp.azure.com'
+        username: credentials.username,
+        password: credentials.password,
+        baseUrl: credentials.baseUrl
       });
-      
-      // 標記為來自首頁認證
-      setIsFromHomepageAuth(true);
-      
-      // 如果 mode 參數為 original 或者有完整的認證信息，設定為原始模式
-      if (mode === 'original' || (username && password && baseUrl)) {
-        setServiceMode('original');
-      }
     }
-  }, [searchParams]);
+    
+    // 檢查是否應該顯示並使用原始服務
+    const shouldShowOriginal = mode === 'original' || 
+      (isFromHomepageAuth && loginStatus.status === 'success' && portalAccess.status === 'success');
+    
+    // 檢查是否有完整的認證信息且已成功驗證
+    const hasValidCredentials = credentials && 
+        credentials.username && 
+        credentials.password && 
+        loginStatus.status === 'success' && 
+        portalAccess.status === 'success';
+    
+    if (shouldShowOriginal || hasValidCredentials) {
+      setServiceMode('original');
+      setShowOriginalService(true);
+    } else {
+      // 如果有認證信息但未完全驗證，仍然顯示原始服務選項但不自動選擇
+      if (credentials && credentials.username && credentials.password) {
+        setShowOriginalService(true);
+      }
+      setServiceMode('external');
+    }
+
+    // 重置標記，這樣重新整理頁面時不會再次觸發
+    consumeIsFromHomepageAuth();
+  }, [searchParams, credentials, loginStatus.status, portalAccess.status, isFromHomepageAuth, consumeIsFromHomepageAuth]);
 
   const { getApiKeyByService, getAvailableServices } = useApiKeys();
   const {
@@ -80,6 +106,30 @@ function ChatPageContent() {
     scrollToBottom();
   }, [currentSession?.messages]);
 
+  // 用戶活動檢測，自動延長會話
+  useEffect(() => {
+    const handleUserActivity = () => {
+      if (credentials && 
+          credentials.username && 
+          credentials.password && 
+          loginStatus.status === 'success' && 
+          portalAccess.status === 'success') {
+        extendSession();
+      }
+    };
+
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+    events.forEach(event => {
+      document.addEventListener(event, handleUserActivity, true);
+    });
+
+    return () => {
+      events.forEach(event => {
+        document.removeEventListener(event, handleUserActivity, true);
+      });
+    };
+  }, [credentials, loginStatus.status, portalAccess.status, extendSession]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -89,7 +139,7 @@ function ChatPageContent() {
     if (!currentSessionId && sessions.length === 0) {
       createNewSession();
     }
-  }, [currentSessionId, sessions.length, createNewSession]);
+  }, [currentSessionId, sessions.length]); // 移除 createNewSession 依賴
 
   const handleSendMessage = async (message: string) => {
     if (serviceMode === 'original') {
@@ -334,6 +384,26 @@ function ChatPageContent() {
     <div className="flex flex-col h-screen bg-gray-100">
       <NavigationHeader title="AI 聊天" />
       
+      {/* 會話狀態提示 - 只在非首頁認證時顯示 */}
+      {!isFromHomepageAuth && 
+       credentials && 
+       credentials.username && 
+       credentials.password && 
+       loginStatus.status === 'success' && 
+       portalAccess.status === 'success' && (
+        <div className="bg-green-50 border-b border-green-200 px-4 py-2">
+          <div className="flex items-center justify-between max-w-4xl mx-auto">
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span className="text-sm text-green-800">Portal 認證已激活</span>
+            </div>
+            <div className="text-xs text-green-700">
+              用戶: {credentials?.username} | 30分鐘會話
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="flex flex-1 overflow-hidden">
         {/* 側邊欄 */}
         <ChatSidebar
@@ -348,60 +418,61 @@ function ChatPageContent() {
       />
 
         {/* 主要聊天區域 */}
-        <div className="flex-1 flex flex-col">
-        {/* 服務選擇器 */}
-        <ServiceSelector
-          selectedService={selectedService}
-          onServiceChange={setSelectedService}
-          selectedModel={selectedModel}
-          onModelChange={setSelectedModel}
-          serviceMode={serviceMode}
-          onServiceModeChange={setServiceMode}
-          originalServiceCredentials={originalServiceCredentials}
-          onOriginalServiceCredentialsChange={setOriginalServiceCredentials}
-          isFromHomepageAuth={isFromHomepageAuth}
-        />
-
-        {/* 導航按鈕 */}
-        <div className="flex justify-between items-center px-4 py-2 bg-gray-50 border-b border-gray-200">
-          <div className="flex items-center space-x-4">
-            <Link 
-              href="/settings"
-              className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
-            >
-              API 設定
-            </Link>
-            <Link 
-              href="/"
-              className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-            >
-              回到首頁
-            </Link>
-            <Link 
-              href="/docs"
-              className="px-3 py-1 text-sm bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
-            >
-              格式說明
-            </Link>
+        <div className="flex-1 flex flex-col min-h-0">
+          {/* 服務選擇器 */}
+          <div className="flex-shrink-0">
+            <ServiceSelector
+              selectedService={selectedService}
+              onServiceChange={setSelectedService}
+              selectedModel={selectedModel}
+              onModelChange={setSelectedModel}
+              serviceMode={serviceMode}
+              onServiceModeChange={setServiceMode}
+              originalServiceCredentials={originalServiceCredentials}
+              onOriginalServiceCredentialsChange={(newCredentials) => {
+                setOriginalServiceCredentials(newCredentials);
+                updateCredentials(newCredentials);
+              }}
+              isFromHomepageAuth={isFromHomepageAuth}
+              showOriginalService={showOriginalService}
+              onShowOriginalServiceChange={setShowOriginalService}
+            />
           </div>
-          <div className="text-sm text-gray-600">
-            {serviceMode === 'original' ? 'Portal 服務' : `外部服務: ${selectedService || '未選擇'}`}
-          </div>
-        </div>
 
-        {/* 聊天訊息區域 */}
-        <div className="flex-1 overflow-y-auto p-4 bg-white">
+          {/* 狀態資訊列 */}
+          <div className="flex-shrink-0 flex justify-between items-center px-4 py-2 bg-gray-50 border-b border-gray-200">
+            <div className="text-sm text-gray-600">
+              {serviceMode === 'original' ? 'Portal 服務' : `外部服務: ${selectedService || '未選擇'}`}
+            </div>
+            <div className="flex items-center space-x-2">
+              <Link 
+                href="/settings"
+                className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+              >
+                API 設定
+              </Link>
+              <Link 
+                href="/docs"
+                className="px-2 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
+              >
+                格式說明
+              </Link>
+            </div>
+          </div>
+
+          {/* 聊天訊息區域 */}
+          <div className="flex-1 overflow-y-auto p-4 bg-white min-h-0">
           {/* 沒有設定的提示 */}
           {serviceMode === 'external' && availableServices.length === 0 && (
             <div className="text-center py-8">
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 max-w-md mx-auto">
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 max-w-2xl mx-auto">
                 <h3 className="text-lg font-medium text-yellow-800 mb-2">
                   尚未設定外部 AI 服務
                 </h3>
                 <p className="text-yellow-700 mb-4">
                   請先添加至少一個 AI 服務的 API Key，或選擇使用原始服務
                 </p>
-                <div className="flex space-x-2">
+                <div className="flex space-x-2 justify-center">
                   <button
                     onClick={() => setIsApiKeyModalOpen(true)}
                     className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
@@ -422,7 +493,7 @@ function ChatPageContent() {
           {/* 原始服務未設定的提示 */}
           {serviceMode === 'original' && (!originalServiceCredentials.username || !originalServiceCredentials.password) && (
             <div className="text-center py-8">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 max-w-md mx-auto">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 max-w-2xl mx-auto">
                 <h3 className="text-lg font-medium text-blue-800 mb-2">
                   請設定原始服務認證
                 </h3>
@@ -435,7 +506,7 @@ function ChatPageContent() {
 
           {/* 聊天訊息 */}
           {currentSession && currentSession.messages.length > 0 && (
-            <div className="max-w-4xl mx-auto">
+            <div className="w-full max-w-none px-4">
               {currentSession.messages.map((message, index) => (
                 <ChatMessage
                   key={message.id}
@@ -449,7 +520,7 @@ function ChatPageContent() {
           {/* 空白狀態 */}
           {currentSession && currentSession.messages.length === 0 && canSendMessage && (
             <div className="text-center py-8">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 max-w-md mx-auto">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 max-w-2xl mx-auto">
                 <h3 className="text-lg font-medium text-blue-800 mb-2">
                   開始新對話
                 </h3>
@@ -462,8 +533,8 @@ function ChatPageContent() {
 
           {/* 錯誤訊息 */}
           {error && (
-            <div className="max-w-4xl mx-auto mb-4">
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="w-full max-w-none px-4 mb-4">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 max-w-2xl mx-auto">
                 <div className="flex items-center">
                   <div className="text-red-600 mr-2">⚠️</div>
                   <div className="text-red-800">{error}</div>
@@ -478,26 +549,28 @@ function ChatPageContent() {
             </div>
           )}
 
-          <div ref={messagesEndRef} />
-        </div>
+            <div ref={messagesEndRef} />
+          </div>
 
-        {/* 輸入區域 */}
-        <ChatInput
-          onSendMessage={handleSendMessage}
-          isLoading={isLoading}
-          disabled={!canSendMessage}
-          placeholder={
-            serviceMode === 'original' 
-              ? (!originalServiceCredentials.username || !originalServiceCredentials.password) 
-                ? "請先填寫原始服務的用戶名和密碼" 
-                : "輸入您的訊息... (Shift+Enter 換行)"
-              : availableServices.length === 0
-                ? "請先設定外部 AI 服務的 API Key"
-                : !selectedService
-                  ? "請先選擇 AI 服務"
-                  : "輸入您的訊息... (Shift+Enter 換行)"
-          }
-        />
+          {/* 輸入區域 */}
+          <div className="flex-shrink-0 border-t border-gray-200">
+            <ChatInput
+              onSendMessage={handleSendMessage}
+              isLoading={isLoading}
+              disabled={!canSendMessage}
+              placeholder={
+                serviceMode === 'original' 
+                  ? (!originalServiceCredentials.username || !originalServiceCredentials.password) 
+                    ? "請先填寫原始服務的用戶名和密碼" 
+                    : "輸入您的訊息... (Shift+Enter 換行)"
+                  : availableServices.length === 0
+                    ? "請先設定外部 AI 服務的 API Key"
+                    : !selectedService
+                      ? "請先選擇 AI 服務"
+                      : "輸入您的訊息... (Shift+Enter 換行)"
+              }
+            />
+          </div>
         </div>
       </div>
 

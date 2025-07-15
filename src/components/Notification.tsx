@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface NotificationProps {
   type: 'success' | 'error' | 'warning' | 'info';
@@ -18,22 +18,34 @@ export default function Notification({
   className = ''
 }: NotificationProps) {
   const [isVisible, setIsVisible] = useState(true);
+  const onCloseRef = useRef(onClose);
 
+  // Keep the ref updated with the latest onClose function
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  // Memoize the close handler to prevent unnecessary re-renders
+  const handleAutoClose = useCallback(() => {
+    setIsVisible(false);
+    setTimeout(() => onCloseRef.current?.(), 300);
+  }, []); // No dependencies needed since we use ref
+
+  // Setup auto-close timer
   useEffect(() => {
     if (duration > 0) {
       const timer = setTimeout(() => {
         setIsVisible(false);
-        setTimeout(() => onClose?.(), 300);
+        setTimeout(() => onCloseRef.current?.(), 300);
       }, duration);
-
       return () => clearTimeout(timer);
     }
-  }, [duration, onClose]);
+  }, [duration]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setIsVisible(false);
-    setTimeout(() => onClose?.(), 300);
-  };
+    setTimeout(() => onCloseRef.current?.(), 300);
+  }, []); // No dependencies needed since we use ref
 
   const typeConfig = {
     success: {
@@ -118,30 +130,30 @@ export function useNotification() {
     duration?: number;
   }>>([]);
 
-  const addNotification = (notification: Omit<typeof notifications[0], 'id'>) => {
+  const addNotification = useCallback((notification: Omit<typeof notifications[0], 'id'>) => {
     const id = Date.now().toString();
     setNotifications(prev => [...prev, { ...notification, id }]);
-  };
+  }, []);
 
-  const removeNotification = (id: string) => {
+  const removeNotification = useCallback((id: string) => {
     setNotifications(prev => prev.filter(n => n.id !== id));
-  };
+  }, []);
 
-  const showSuccess = (title: string, message: string) => {
+  const showSuccess = useCallback((title: string, message: string) => {
     addNotification({ type: 'success', title, message });
-  };
+  }, [addNotification]);
 
-  const showError = (title: string, message: string) => {
+  const showError = useCallback((title: string, message: string) => {
     addNotification({ type: 'error', title, message });
-  };
+  }, [addNotification]);
 
-  const showWarning = (title: string, message: string) => {
+  const showWarning = useCallback((title: string, message: string) => {
     addNotification({ type: 'warning', title, message });
-  };
+  }, [addNotification]);
 
-  const showInfo = (title: string, message: string) => {
+  const showInfo = useCallback((title: string, message: string) => {
     addNotification({ type: 'info', title, message });
-  };
+  }, [addNotification]);
 
   return {
     notifications,
