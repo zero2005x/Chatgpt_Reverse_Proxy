@@ -1,6 +1,25 @@
 import { useState, useEffect } from 'react';
 import { ApiKey } from '@/types/message';
 
+// 簡單的加密/解密函數（用於客戶端儲存）
+const encryptApiKey = (key: string): string => {
+  const encrypted = btoa(key.split('').map(char => 
+    String.fromCharCode(char.charCodeAt(0) ^ 123)
+  ).join(''));
+  return encrypted;
+};
+
+const decryptApiKey = (encryptedKey: string): string => {
+  try {
+    const decoded = atob(encryptedKey);
+    return decoded.split('').map(char => 
+      String.fromCharCode(char.charCodeAt(0) ^ 123)
+    ).join('');
+  } catch {
+    return encryptedKey; // 如果解密失敗，返回原始值（向後兼容）
+  }
+};
+
 export function useApiKeys() {
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -14,7 +33,13 @@ export function useApiKeys() {
     try {
       const saved = localStorage.getItem('apiKeys');
       if (saved) {
-        setApiKeys(JSON.parse(saved));
+        const parsedKeys = JSON.parse(saved);
+        // 解密 API Keys
+        const decryptedKeys = parsedKeys.map((key: ApiKey) => ({
+          ...key,
+          key: decryptApiKey(key.key)
+        }));
+        setApiKeys(decryptedKeys);
       }
     } catch (error) {
       console.error('載入 API Key 失敗:', error);
@@ -24,7 +49,12 @@ export function useApiKeys() {
 
   const saveApiKeys = (keys: ApiKey[]) => {
     try {
-      localStorage.setItem('apiKeys', JSON.stringify(keys));
+      // 加密 API Keys 再儲存
+      const encryptedKeys = keys.map(key => ({
+        ...key,
+        key: encryptApiKey(key.key)
+      }));
+      localStorage.setItem('apiKeys', JSON.stringify(encryptedKeys));
       setApiKeys(keys);
       setStatus('saved');
       setTimeout(() => setStatus('idle'), 2000);

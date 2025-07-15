@@ -25,15 +25,72 @@ interface ServiceSelectorProps {
 }
 
 const SERVICE_MODELS = {
-  openai: ['gpt-4', 'gpt-4-turbo', 'gpt-3.5-turbo', 'gpt-3.5-turbo-16k'],
-  google: ['gemini-pro', 'gemini-pro-vision'],
-  mistral: ['mistral-large', 'mistral-medium', 'mistral-small'],
-  cohere: ['command', 'command-light', 'command-nightly'],
-  groq: ['mixtral-8x7b-32768', 'llama2-70b-4096', 'llama2-7b-2048'],
-  anthropic: ['claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku'],
-  azure: ['gpt-4', 'gpt-35-turbo'],
+  // OpenAI: 新增了 gpt-4o 和 gpt-4o-mini
+  openai: [
+    'gpt-4o', 
+    'gpt-4o-mini',
+    'gpt-4-turbo', 
+    'gpt-3.5-turbo'
+  ],
+
+  // Google: 更新為最新的 Gemini 1.5 系列
+  google: [
+    'gemini-1.5-pro', 
+    'gemini-1.5-flash',
+    'gemini-1.0-pro'
+  ],
+
+  // Mistral: 新增了 8x22B 和 Codestral 模型
+  mistral: [
+    'mistral-large-latest', 
+    'open-mixtral-8x22b',
+    'codestral-latest',
+    'mistral-small-latest'
+  ],
+  
+  // Cohere: 更新為 Command R 系列
+  cohere: [
+    'command-r-plus', 
+    'command-r', 
+    'command-light'
+  ],
+
+  // Groq: 更新為 Llama 3 和 Gemma，移除舊的 Llama 2
+  groq: [
+    'llama3-70b-8192', 
+    'llama3-8b-8192', 
+    'mixtral-8x7b-32768', 
+    'gemma-7b-it'
+  ],
+
+  // Anthropic: 新增了最新的 Claude 3.5 Sonnet
+  anthropic: [
+    'claude-3.5-sonnet-20240620',
+    'claude-3-opus-20240229', 
+    'claude-3-sonnet-20240229', 
+    'claude-3-haiku-20240307'
+  ],
+
+  // Azure: 擴充了模型列表以包含常用選項
+  azure: [
+    'gpt-4',
+    'gpt-4-turbo',
+    'gpt-35-turbo',
+    'gpt-35-turbo-16k'
+  ],
+
   huggingface: ['microsoft/DialoGPT-medium', 'facebook/blenderbot-400M-distill'],
-  xai: ['grok-beta']
+  xai: [
+    'grok-4-0709',
+    'grok-3',
+    'grok-3-mini',
+    'grok-3-fast-us-east-1',
+    'grok-3-fast-eu-west-1',
+    'grok-3-mini-fast',
+    'grok-2-vision-1212-us-east-1',
+    'grok-2-vision-1212-eu-west-1',
+    'grok-2-image-1212'
+  ]
 };
 
 export default function ServiceSelector({ 

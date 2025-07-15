@@ -14,10 +14,15 @@
 - **外部 AI 服務**：支援 27+ 種 AI 服務提供商
 
 ### 🧠 支援的 AI 服務
-- **主流服務**：OpenAI GPT、Google Gemini、Claude、Mistral
-- **專業服務**：Cohere、Groq、Perplexity、xAI (Grok)
-- **雲端平台**：Azure OpenAI、AWS Bedrock、Google Vertex AI
-- **開源平台**：Hugging Face、Together AI、Fireworks AI
+- **OpenAI**：GPT-4o, GPT-4o-mini, GPT-4-turbo, GPT-3.5-turbo
+- **Google**：Gemini-1.5-pro, Gemini-1.5-flash, Gemini-1.0-pro
+- **Anthropic**：Claude-3.5-sonnet, Claude-3-opus, Claude-3-sonnet, Claude-3-haiku
+- **Mistral**：Mistral-large-latest, Open-mixtral-8x22b, Codestral-latest
+- **Cohere**：Command-r-plus, Command-r, Command-light
+- **Groq**：Llama3-70b-8192, Llama3-8b-8192, Mixtral-8x7b-32768, Gemma-7b-it
+- **xAI**：Grok-4, Grok-3 系列模型
+- **Azure OpenAI**：GPT-4, GPT-4-turbo, GPT-35-turbo 系列
+- **其他服務**：Hugging Face、Together AI、Fireworks AI、Perplexity 等
 
 ### 💾 資料管理
 - **聊天記錄**：自動儲存、匯入/匯出 (JSON, CSV)

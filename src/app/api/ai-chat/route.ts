@@ -88,7 +88,7 @@ const AI_ENDPOINTS = {
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     }),
-    payload: (message: string, model = 'grok-beta', temperature = 0.7, maxTokens = 1000) => ({
+    payload: (message: string, model = 'grok-4-0709', temperature = 0.7, maxTokens = 1000) => ({
       model,
       messages: [{ role: 'user', content: message }],
       temperature,

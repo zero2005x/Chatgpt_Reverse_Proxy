@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Next.js-based AI reverse proxy application that serves as an intermediary layer to forward chat requests from external websites to an AI module hosted at `https://dgb01p240102.japaneast.cloudapp.azure.com/`. The project is designed to expose AI functionality through a clean REST API.
+This is a comprehensive Next.js-based AI chat platform that provides dual-mode functionality: it serves as both a reverse proxy for an internal AI Portal service and a multi-service AI platform supporting 27+ external AI providers. The project features a complete chat interface, session management, API key management, and comprehensive security features.
 
 ## Tech Stack
 
@@ -21,10 +21,33 @@ This is a Next.js-based AI reverse proxy application that serves as an intermedi
 Chatgpt_Reverse_Proxy/
 ├── src/
 │   └── app/
-│       ├── api/chat/route.ts    # Main API endpoint for chat requests
+│       ├── api/                 # API endpoints
+│       │   ├── chat/route.ts    # Original Portal service
+│       │   ├── ai-chat/route.ts # External AI services
+│       │   ├── check-login/route.ts # Portal authentication
+│       │   └── check-access/route.ts # Portal access verification
+│       ├── chat/                # Multi-service chat interface
+│       │   └── page.tsx
+│       ├── settings/            # API key management
+│       │   └── page.tsx
+│       ├── docs/                # Data format documentation
+│       │   └── page.tsx
 │       ├── layout.tsx           # Root layout component
-│       ├── page.tsx            # Default home page
+│       ├── page.tsx            # Homepage with Portal authentication
 │       └── globals.css         # Global styles
+├── components/                  # React components
+│   ├── ServiceSelector.tsx     # Service/model selection
+│   ├── ChatSidebar.tsx         # Session management
+│   ├── ChatMessage.tsx         # Message display
+│   ├── ChatInput.tsx           # Advanced input with file upload
+│   ├── ApiKeyModal.tsx         # API key setup
+│   └── InfoPanel.tsx           # Service information
+├── hooks/                      # Custom React hooks
+│   ├── useApiKeys.ts           # API key management
+│   ├── useChatHistory.ts       # Chat session management
+│   └── useApiKeyImportExport.ts # Batch operations
+├── types/                      # TypeScript type definitions
+│   └── message.ts
 ├── public/                     # Static assets
 ├── package.json               # Dependencies and scripts
 ├── tsconfig.json             # TypeScript configuration
@@ -55,7 +78,9 @@ npm run lint
 
 ## API Architecture
 
-### Main Endpoint: `/api/chat`
+### Dual-Mode API System
+
+#### Original Portal Service: `/api/chat`
 - **Method**: POST
 - **Content-Type**: application/json
 - **Request Body**: 
@@ -69,6 +94,18 @@ The API forwards requests to:
 - **Target URL**: `https://dgb01p240102.japaneast.cloudapp.azure.com/wise/wiseadm/s/promptportal/portal/completion`
 - **Method**: POST with `application/x-www-form-urlencoded` payload
 - **Payload**: `USERUPLOADFILE` (base64 file data), `USERPROMPT` (user message)
+
+#### External AI Services: `/api/ai-chat`
+- **Method**: POST
+- **Content-Type**: application/json
+- **Request Body**: `{ "message": string, "service": string, "model"?: string, "temperature"?: number, "maxTokens"?: number }`
+- **Response**: `{ "reply": string }` or `{ "error": string }`
+- **Supported Services**: 27+ AI providers including OpenAI, Google, Anthropic, Mistral, Cohere, Groq, xAI, Azure, etc.
+- **Model Selection**: Dynamic model selection based on service provider
+
+#### Authentication & Verification APIs
+- **`/api/check-login`**: Portal authentication status verification
+- **`/api/check-access`**: Portal access permission verification
 
 ### Key Implementation Details
 
@@ -88,11 +125,24 @@ The API forwards requests to:
 
 ## External Dependencies
 
+### Portal Service Dependencies
 - The application depends on an external AI service at `dgb01p240102.japaneast.cloudapp.azure.com`
 - Uses dynamic API key retrieval with configurable fallback
 - Implements automatic login with environment-based credentials
 - The service is part of a "Wise" admin system with prompt portal functionality
 - Requires session-based authentication with specific headers and cookies
+
+### External AI Service Dependencies
+- **OpenAI**: GPT-4o, GPT-4o-mini, GPT-4-turbo, GPT-3.5-turbo
+- **Google**: Gemini-1.5-pro, Gemini-1.5-flash, Gemini-1.0-pro
+- **Anthropic**: Claude-3.5-sonnet, Claude-3-opus, Claude-3-sonnet, Claude-3-haiku
+- **Mistral**: Mistral-large-latest, Open-mixtral-8x22b, Codestral-latest
+- **Cohere**: Command-r-plus, Command-r, Command-light
+- **Groq**: Llama3-70b-8192, Llama3-8b-8192, Mixtral-8x7b-32768, Gemma-7b-it
+- **xAI**: Grok-4, Grok-3 variants with regional endpoints
+- **Azure OpenAI**: GPT-4, GPT-4-turbo, GPT-35-turbo variants
+- **Hugging Face**: DialoGPT-medium, BlenderBot-400M-distill
+- **Additional Services**: Together AI, Fireworks AI, Perplexity, AWS Bedrock, etc.
 
 ## Development Notes
 
@@ -100,7 +150,10 @@ The API forwards requests to:
 - TypeScript strict mode is enabled
 - Next.js plugins are configured for optimal development experience
 - The app uses Geist fonts (sans and mono) for typography
-- Default page contains standard Next.js boilerplate content
+- Complete chat application with session management and data persistence
+- Client-side data storage using localStorage for chat history and API keys
+- Real-time service status monitoring and authentication verification
+- Comprehensive error handling and user feedback systems
 
 ## Testing and Quality
 
@@ -112,21 +165,23 @@ npm run build
 
 ## Testing Examples
 
-### Basic Text Chat
+### Portal Service Testing
+
+#### Basic Text Chat
 ```bash
 curl -X POST http://localhost:3000/api/chat \
   -H "Content-Type: application/json" \
   -d '{"message":"What are the best restaurants in Taipei?","username":"your_username","password":"your_password","id":"13"}'
 ```
 
-### File Upload Chat
+#### File Upload Chat
 ```bash
 curl -X POST http://localhost:3000/api/chat \
   -H "Content-Type: application/json" \
   -d '{"message":"Analyze this file","username":"your_username","password":"your_password","id":"13","file":{"data":"data:text/plain;base64,SGVsbG8gV29ybGQ="}}'
 ```
 
-### PowerShell Testing
+#### PowerShell Testing
 ```powershell
 $body = @{
     message = "Please analyze the uploaded file"
@@ -139,6 +194,45 @@ $body = @{
 } | ConvertTo-Json -Depth 3
 
 Invoke-RestMethod -Uri http://localhost:3000/api/chat -Method POST -ContentType "application/json" -Body $body
+```
+
+### External AI Services Testing
+
+#### OpenAI GPT-4o
+```bash
+curl -X POST http://localhost:3000/api/ai-chat \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Hello, how are you?","service":"openai","model":"gpt-4o","temperature":0.7,"maxTokens":1000}'
+```
+
+#### Google Gemini
+```bash
+curl -X POST http://localhost:3000/api/ai-chat \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Explain quantum computing","service":"google","model":"gemini-1.5-pro"}'
+```
+
+#### Anthropic Claude
+```bash
+curl -X POST http://localhost:3000/api/ai-chat \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Write a poem about AI","service":"anthropic","model":"claude-3.5-sonnet-20240620"}'
+```
+
+### Authentication Testing
+
+#### Check Login Status
+```bash
+curl -X POST http://localhost:3000/api/check-login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"your_username","password":"your_password","baseUrl":"https://dgb01p240102.japaneast.cloudapp.azure.com"}'
+```
+
+#### Check Access Permission
+```bash
+curl -X POST http://localhost:3000/api/check-access \
+  -H "Content-Type: application/json" \
+  -d '{"username":"your_username","password":"your_password","baseUrl":"https://dgb01p240102.japaneast.cloudapp.azure.com"}'
 ```
 
 ### Testing Rate Limiting
@@ -179,25 +273,66 @@ done
 
 ## Future Considerations
 
-- **Performance Optimization**: Consider implementing session caching to reduce login frequency
-- **Error Recovery**: Add retry mechanisms for failed authentication attempts
-- **Monitoring**: Implement logging and monitoring for production usage
-- **Scalability**: Consider connection pooling for high-traffic scenarios (rate limiting already implemented)
-- **Enhanced Security**: Consider implementing API key authentication, JWT tokens, or OAuth2
-- **Caching**: Add response caching for frequently asked questions
+### Performance Optimization
+- **Session Caching**: Implement session caching to reduce login frequency
+- **Response Caching**: Add response caching for frequently asked questions
+- **Connection Pooling**: Consider connection pooling for high-traffic scenarios
+
+### Enhanced Features
+- **Multi-Language Support**: Add internationalization for different languages
+- **Advanced Chat Features**: Implement message reactions, reply threads, and file sharing
+- **AI Model Comparison**: Side-by-side comparison of different AI models
+- **Custom Model Fine-tuning**: Integration with custom model endpoints
+- **Voice Chat**: Add speech-to-text and text-to-speech capabilities
+
+### Security Enhancements
+- **OAuth Integration**: Add OAuth2 authentication for external services
+- **Advanced Threat Detection**: Implement AI-based content filtering
+- **Audit Logging**: Comprehensive audit trails for all user actions
+- **Role-Based Access Control**: Fine-grained permission management
+
+### Scalability & Monitoring
 - **Load Balancing**: Implement load balancing for multiple backend AI endpoints
+- **Real-time Monitoring**: Add comprehensive monitoring and alerting
+- **Database Integration**: Move from localStorage to proper database backend
+- **API Analytics**: Detailed usage analytics and reporting
+
+### User Experience
+- **Mobile App**: Native mobile application development
+- **Browser Extension**: Chrome/Firefox extension for quick access
+- **Keyboard Shortcuts**: Advanced keyboard navigation and shortcuts
+- **Accessibility**: Enhanced accessibility features for users with disabilities
 
 ## Environment Variables
 
 Create a `.env.local` file based on `.env.example`:
 
 ```bash
-# AI Chat Proxy Environment Variables
+# AI Chat Platform Environment Variables
+
+# Portal Service Configuration
 AI_BASE_URL=https://dgb01p240102.japaneast.cloudapp.azure.com
+TENANT_UUID=your-tenant-uuid
+LOGIN_PATH=/your/login/path
+
+# Security Settings
+ENCRYPTION_KEY=your-32-character-encryption-key
 MAX_MESSAGE_LENGTH=10000
 MAX_FILE_SIZE=5242880
 RATE_LIMIT_WINDOW=60000
 RATE_LIMIT_MAX_REQUESTS=10
 SESSION_TIMEOUT=3600000
+
+# External AI Services (Optional - can be set via UI)
+OPENAI_API_KEY=your-openai-key
+GOOGLE_API_KEY=your-google-key
+ANTHROPIC_API_KEY=your-anthropic-key
+MISTRAL_API_KEY=your-mistral-key
+COHERE_API_KEY=your-cohere-key
+GROQ_API_KEY=your-groq-key
+XAI_API_KEY=your-xai-key
+
+# Application Settings
 NODE_ENV=production
+NEXT_PUBLIC_APP_URL=https://your-app-domain.com
 ```
