@@ -1,14 +1,35 @@
 {
-  "name": "ai-proxy",
-  "description": "AI Chat Multi-Service Platform - A comprehensive chat platform supporting 27+ AI services",
-  "keywords": ["ai", "chat", "nextjs", "openai", "claude", "gemini", "multi-service"],
+  "name": "ai-chat-multi-service-platform",
+  "description": "A comprehensive AI chat platform supporting 27+ AI services with secure API key management, dual authentication modes, and intelligent session management",
+  "keywords": [
+    "ai", 
+    "chat", 
+    "nextjs", 
+    "typescript",
+    "openai", 
+    "claude", 
+    "gemini", 
+    "multi-service",
+    "api-key-management",
+    "chat-history",
+    "portal-authentication",
+    "enterprise-ready"
+  ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/Chatgpt_Reverse_Proxy.git"
+    "url": "https://github.com/zero2005x/Chatgpt_Reverse_Proxy.git"
   },
-  "author": "Your Name",
+  "homepage": "https://github.com/zero2005x/Chatgpt_Reverse_Proxy#readme",
+  "bugs": {
+    "url": "https://github.com/zero2005x/Chatgpt_Reverse_Proxy/issues"
+  },
+  "author": {
+    "name": "AI Proxy Team",
+    "email": "contact@ai-proxy.dev",
+    "url": "https://github.com/zero2005x"
+  },
   "license": "MIT",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",

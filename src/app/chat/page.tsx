@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { Message } from '@/types/message';
 import { useApiKeys } from '@/hooks/useApiKeys';
-import { useChatHistory } from '@/hooks/useChatHistory';
+import { useChatContext } from '@/contexts/ChatContext';
 import { usePortalAuth } from '@/hooks/usePortalAuth';
 import ChatMessage from '@/components/ChatMessage';
 import ChatInput from '@/components/ChatInput';
@@ -23,6 +24,8 @@ function ChatPageContent() {
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // 手機版側邊欄狀態
+  const [hasUserSentMessage, setHasUserSentMessage] = useState(false); // 追蹤使用者是否已發送訊息
   const { notifications, showSuccess, showError, removeNotification } = useNotification();
   
   // 使用 Portal 認證 hook
@@ -39,23 +42,31 @@ function ChatPageContent() {
   // 服務模式狀態 - 預設使用外部服務，只有當明確從認證頁面跳轉時才顯示原始服務
   const [serviceMode, setServiceMode] = useState<'original' | 'external'>('external');
   const [showOriginalService, setShowOriginalService] = useState(false);
+  const [showMobileServiceSelector, setShowMobileServiceSelector] = useState(false);
+  const [isServiceModeManuallySet, setIsServiceModeManuallySet] = useState(false); // 追蹤是否手動設定服務模式
   const [originalServiceCredentials, setOriginalServiceCredentials] = useState({
     username: credentials?.username || '',
     password: credentials?.password || '',
     baseUrl: credentials?.baseUrl || 'https://dgb01p240102.japaneast.cloudapp.azure.com'
   });
 
-  // 初始化時設定服務模式
+  // 初始化時設定服務模式 - 只在首次載入時執行，避免覆蓋用戶手動選擇
   useEffect(() => {
+    // 如果已經手動設定過服務模式，就不再自動調整
+    if (isServiceModeManuallySet) {
+      return;
+    }
+
     const mode = searchParams.get('mode');
     
     // 如果有持久化的認證信息，使用它
     if (credentials) {
-      setOriginalServiceCredentials({
+      setOriginalServiceCredentials(prev => ({
+        ...prev,
         username: credentials.username,
         password: credentials.password,
         baseUrl: credentials.baseUrl
-      });
+      }));
     }
     
     // 檢查是否應該顯示並使用原始服務
@@ -72,17 +83,62 @@ function ChatPageContent() {
     if (shouldShowOriginal || hasValidCredentials) {
       setServiceMode('original');
       setShowOriginalService(true);
+      console.log('Auto-set service mode to original due to valid credentials or homepage auth');
     } else {
       // 如果有認證信息但未完全驗證，仍然顯示原始服務選項但不自動選擇
       if (credentials && credentials.username && credentials.password) {
         setShowOriginalService(true);
       }
-      setServiceMode('external');
+      // 只有在沒有任何認證信息時才設定為外部服務
+      if (!credentials || (!credentials.username && !credentials.password)) {
+        setServiceMode('external');
+        console.log('Auto-set service mode to external due to no credentials');
+      }
     }
 
     // 重置標記，這樣重新整理頁面時不會再次觸發
     consumeIsFromHomepageAuth();
-  }, [searchParams, credentials, loginStatus.status, portalAccess.status, isFromHomepageAuth, consumeIsFromHomepageAuth]);
+  }, [searchParams, isFromHomepageAuth, consumeIsFromHomepageAuth]); // 移除 credentials 等依賴，避免重複觸發
+
+  // 單獨處理認證信息的更新，不影響服務模式選擇
+  useEffect(() => {
+    if (credentials) {
+      setOriginalServiceCredentials(prev => ({
+        ...prev,
+        username: credentials.username,
+        password: credentials.password,
+        baseUrl: credentials.baseUrl
+      }));
+      // 顯示原始服務選項，但不自動切換模式
+      setShowOriginalService(true);
+    }
+  }, [credentials]);
+
+  // 處理服務模式手動切換的包裝函數
+  const handleServiceModeChange = useCallback((newMode: 'original' | 'external') => {
+    console.log('Service mode manually changed to:', newMode);
+    setServiceMode(newMode);
+    setIsServiceModeManuallySet(true); // 標記為手動設定
+  }, []);
+
+  // 當認證狀態發生變化時，只有在用戶沒有手動設定的情況下才自動調整服務模式
+  useEffect(() => {
+    if (isServiceModeManuallySet) {
+      console.log('Service mode is manually set, skipping auto-adjustment');
+      return;
+    }
+
+    // 如果認證成功且當前是外部服務模式，可以提示用戶切換到 Portal 服務
+    if (loginStatus.status === 'success' && 
+        portalAccess.status === 'success' && 
+        serviceMode === 'external' &&
+        originalServiceCredentials.username &&
+        originalServiceCredentials.password) {
+      console.log('Authentication successful, but service mode is external and was not manually set');
+      // 這裡可以選擇是否自動切換，或只是確保顯示 Portal 服務選項
+      setShowOriginalService(true);
+    }
+  }, [loginStatus.status, portalAccess.status, serviceMode, originalServiceCredentials.username, originalServiceCredentials.password, isServiceModeManuallySet]);
 
   const { getApiKeyByService, getAvailableServices } = useApiKeys();
   const {
@@ -96,7 +152,7 @@ function ChatPageContent() {
     renameSession,
     exportSessions,
     importSessions
-  } = useChatHistory();
+  } = useChatContext();
 
   const currentSession = getCurrentSession();
   const availableServices = getAvailableServices();
@@ -139,7 +195,7 @@ function ChatPageContent() {
     if (!currentSessionId && sessions.length === 0) {
       createNewSession();
     }
-  }, [currentSessionId, sessions.length]); // 移除 createNewSession 依賴
+  }, []); // 移除所有依賴，只在組件初始化時執行一次
 
   const handleSendMessage = async (message: string) => {
     if (serviceMode === 'original') {
@@ -219,14 +275,24 @@ function ChatPageContent() {
 
     setIsLoading(true);
     setError(null);
+    
+    // 標記用戶已發送訊息
+    if (!hasUserSentMessage) {
+      setHasUserSentMessage(true);
+    }
+
+    // 先添加用戶訊息
+    const userMessage = addMessage({
+      role: 'user',
+      content: message
+    });
+
+    // 確保滾動到底部
+    setTimeout(() => {
+      scrollToBottom();
+    }, 100);
 
     try {
-      // 添加用戶訊息
-      addMessage({
-        role: 'user',
-        content: message
-      });
-
       let response;
       let data;
 
@@ -253,11 +319,16 @@ function ChatPageContent() {
         data = await response.json();
 
         // 添加AI回應
-        addMessage({
+        const aiMessage = addMessage({
           role: 'assistant',
           content: data.reply,
           model: 'Portal AI'
         });
+
+        // 確保滾動到底部
+        setTimeout(() => {
+          scrollToBottom();
+        }, 100);
       } else {
         // 呼叫外部 AI API
         const apiKey = getApiKeyByService(selectedService);
@@ -288,17 +359,24 @@ function ChatPageContent() {
         data = await response.json();
 
         // 添加AI回應
-        addMessage({
+        const aiMessage = addMessage({
           role: 'assistant',
           content: data.reply,
           model: data.model || selectedModel || 'default'
         });
+
+        // 確保滾動到底部
+        setTimeout(() => {
+          scrollToBottom();
+        }, 100);
       }
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '發生未知錯誤';
       setError(errorMessage);
       showError('發送失敗', errorMessage);
+      
+      // 如果發生錯誤，用戶訊息已經被添加，不需要移除，只需要顯示錯誤
     } finally {
       setIsLoading(false);
     }
@@ -397,7 +475,7 @@ function ChatPageContent() {
               <div className="w-2 h-2 bg-green-500 rounded-full"></div>
               <span className="text-sm text-green-800">Portal 認證已激活</span>
             </div>
-            <div className="text-xs text-green-700">
+            <div className="text-xs text-green-700 hidden sm:block">
               用戶: {credentials?.username} | 30分鐘會話
             </div>
           </div>
@@ -405,29 +483,50 @@ function ChatPageContent() {
       )}
       
       <div className="flex flex-1 overflow-hidden">
-        {/* 側邊欄 */}
-        <ChatSidebar
-        sessions={sessions}
-        currentSessionId={currentSessionId}
-        onSessionSelect={setCurrentSessionId}
-        onNewSession={createNewSession}
-        onDeleteSession={deleteSession}
-        onRenameSession={renameSession}
-        onImportSessions={handleImportSessions}
-        onExportSessions={handleExportSessions}
-      />
+        {/* 手機版側邊欄背景遮罩 */}
+        {isSidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-30 xl:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+        
+        {/* 側邊欄 - 在手機和平板上可切換 */}
+        <div className={`
+          fixed xl:relative inset-y-0 left-0 z-40 xl:z-auto
+          transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} xl:translate-x-0
+          transition-transform duration-300 ease-in-out xl:transition-none
+          ${isSidebarOpen ? 'block' : 'hidden'} xl:block
+        `}>
+          <ChatSidebar
+          sessions={sessions}
+          currentSessionId={currentSessionId}
+          onSessionSelect={(sessionId) => {
+            setCurrentSessionId(sessionId);
+            setIsSidebarOpen(false); // 選擇會話後關閉手機版側邊欄
+          }}
+          onNewSession={() => {
+            createNewSession();
+            setIsSidebarOpen(false); // 創建新會話後關閉手機版側邊欄
+          }}
+          onDeleteSession={deleteSession}
+          onRenameSession={renameSession}
+          onImportSessions={handleImportSessions}
+          onExportSessions={handleExportSessions}
+        />
+        </div>
 
         {/* 主要聊天區域 */}
         <div className="flex-1 flex flex-col min-h-0">
-          {/* 服務選擇器 */}
-          <div className="flex-shrink-0">
+          {/* 服務選擇器 - 在手機上隱藏或壓縮 */}
+          <div className="flex-shrink-0 hidden sm:block">
             <ServiceSelector
               selectedService={selectedService}
               onServiceChange={setSelectedService}
               selectedModel={selectedModel}
               onModelChange={setSelectedModel}
               serviceMode={serviceMode}
-              onServiceModeChange={setServiceMode}
+              onServiceModeChange={handleServiceModeChange}
               originalServiceCredentials={originalServiceCredentials}
               onOriginalServiceCredentialsChange={(newCredentials) => {
                 setOriginalServiceCredentials(newCredentials);
@@ -436,24 +535,52 @@ function ChatPageContent() {
               isFromHomepageAuth={isFromHomepageAuth}
               showOriginalService={showOriginalService}
               onShowOriginalServiceChange={setShowOriginalService}
+              hideAuthAfterSuccess={hasUserSentMessage && !isFromHomepageAuth}
             />
           </div>
 
-          {/* 狀態資訊列 */}
-          <div className="flex-shrink-0 flex justify-between items-center px-4 py-2 bg-gray-50 border-b border-gray-200">
-            <div className="text-sm text-gray-600">
+          {/* 狀態資訊列 - 在手機上簡化 */}
+          <div className="flex-shrink-0 flex flex-col sm:flex-row justify-between items-start sm:items-center px-2 sm:px-4 py-1 sm:py-2 bg-gray-50 border-b border-gray-200 gap-1 sm:gap-2">
+            <div className="text-xs sm:text-sm text-gray-600">
               {serviceMode === 'original' ? 'Portal 服務' : `外部服務: ${selectedService || '未選擇'}`}
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+              {/* 手機版側邊欄切換按鈕 */}
+              <button
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                className="xl:hidden px-2 sm:px-3 py-1 sm:py-1.5 text-xs bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors flex items-center space-x-1"
+              >
+                <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+                <span className="hidden sm:inline">會話</span>
+              </button>
+              
+              {/* 手機版新增對話按鈕 */}
+              <button
+                onClick={() => createNewSession()}
+                className="xl:hidden px-2 sm:px-3 py-1 sm:py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+              >
+                新對話
+              </button>
+              
+              {/* 手機版服務切換按鈕 */}
+              <button
+                onClick={() => setShowMobileServiceSelector(true)}
+                className="sm:hidden px-2 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
+              >
+                設定
+              </button>
+              
               <Link 
                 href="/settings"
-                className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+                className="hidden sm:inline-block px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
               >
                 API 設定
               </Link>
               <Link 
                 href="/docs"
-                className="px-2 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
+                className="hidden sm:inline-block px-2 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
               >
                 格式說明
               </Link>
@@ -461,27 +588,27 @@ function ChatPageContent() {
           </div>
 
           {/* 聊天訊息區域 */}
-          <div className="flex-1 overflow-y-auto p-4 bg-white min-h-0">
+          <div className="flex-1 overflow-y-auto p-2 sm:p-3 lg:p-4 bg-white min-h-0 space-y-2">
           {/* 沒有設定的提示 */}
           {serviceMode === 'external' && availableServices.length === 0 && (
-            <div className="text-center py-8">
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 max-w-2xl mx-auto">
-                <h3 className="text-lg font-medium text-yellow-800 mb-2">
+            <div className="text-center py-4 sm:py-8">
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 sm:p-6 max-w-2xl mx-auto">
+                <h3 className="text-base sm:text-lg font-medium text-yellow-800 mb-2">
                   尚未設定外部 AI 服務
                 </h3>
-                <p className="text-yellow-700 mb-4">
+                <p className="text-sm sm:text-base text-yellow-700 mb-4">
                   請先添加至少一個 AI 服務的 API Key，或選擇使用原始服務
                 </p>
-                <div className="flex space-x-2 justify-center">
+                <div className="flex flex-col sm:flex-row gap-2 justify-center">
                   <button
                     onClick={() => setIsApiKeyModalOpen(true)}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
                   >
                     快速設定 API Key
                   </button>
                   <Link 
                     href="/settings"
-                    className="inline-block px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
+                    className="inline-block px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm text-center"
                   >
                     前往設定頁面
                   </Link>
@@ -492,12 +619,12 @@ function ChatPageContent() {
 
           {/* 原始服務未設定的提示 */}
           {serviceMode === 'original' && (!originalServiceCredentials.username || !originalServiceCredentials.password) && (
-            <div className="text-center py-8">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 max-w-2xl mx-auto">
-                <h3 className="text-lg font-medium text-blue-800 mb-2">
+            <div className="text-center py-4 sm:py-8">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 sm:p-6 max-w-2xl mx-auto">
+                <h3 className="text-base sm:text-lg font-medium text-blue-800 mb-2">
                   請設定原始服務認證
                 </h3>
-                <p className="text-blue-700 mb-4">
+                <p className="text-sm sm:text-base text-blue-700 mb-4">
                   請在上方填寫用戶名和密碼以使用原始 Portal 服務
                 </p>
               </div>
@@ -506,7 +633,7 @@ function ChatPageContent() {
 
           {/* 聊天訊息 */}
           {currentSession && currentSession.messages.length > 0 && (
-            <div className="w-full max-w-none px-4">
+            <div className="w-full max-w-none px-1 sm:px-2 lg:px-4">
               {currentSession.messages.map((message, index) => (
                 <ChatMessage
                   key={message.id}
@@ -519,12 +646,12 @@ function ChatPageContent() {
 
           {/* 空白狀態 */}
           {currentSession && currentSession.messages.length === 0 && canSendMessage && (
-            <div className="text-center py-8">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 max-w-2xl mx-auto">
-                <h3 className="text-lg font-medium text-blue-800 mb-2">
+            <div className="text-center py-4 sm:py-8">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 sm:p-6 max-w-2xl mx-auto">
+                <h3 className="text-base sm:text-lg font-medium text-blue-800 mb-2">
                   開始新對話
                 </h3>
-                <p className="text-blue-700">
+                <p className="text-sm sm:text-base text-blue-700">
                   請在下方輸入您的問題，我會盡力為您解答
                 </p>
               </div>
@@ -533,14 +660,14 @@ function ChatPageContent() {
 
           {/* 錯誤訊息 */}
           {error && (
-            <div className="w-full max-w-none px-4 mb-4">
+            <div className="w-full max-w-none px-2 sm:px-4 lg:px-6 mb-4">
               <div className="bg-red-50 border border-red-200 rounded-lg p-4 max-w-2xl mx-auto">
                 <div className="flex items-center">
                   <div className="text-red-600 mr-2">⚠️</div>
-                  <div className="text-red-800">{error}</div>
+                  <div className="text-red-800 text-sm flex-1">{error}</div>
                   <button
                     onClick={() => setError(null)}
-                    className="ml-auto text-red-600 hover:text-red-800"
+                    className="ml-2 text-red-600 hover:text-red-800"
                   >
                     ✕
                   </button>
@@ -552,8 +679,8 @@ function ChatPageContent() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* 輸入區域 */}
-          <div className="flex-shrink-0 border-t border-gray-200">
+          {/* 輸入區域 - 在手機上優化間距 */}
+          <div className="flex-shrink-0 border-t border-gray-200 p-1 sm:p-0">
             <ChatInput
               onSendMessage={handleSendMessage}
               isLoading={isLoading}
@@ -561,13 +688,13 @@ function ChatPageContent() {
               placeholder={
                 serviceMode === 'original' 
                   ? (!originalServiceCredentials.username || !originalServiceCredentials.password) 
-                    ? "請先填寫原始服務的用戶名和密碼" 
-                    : "輸入您的訊息... (Shift+Enter 換行)"
+                    ? "請先在上方填寫用戶名和密碼，然後開始對話" 
+                    : "請輸入您的問題... (Shift+Enter 換行)"
                   : availableServices.length === 0
-                    ? "請先設定外部 AI 服務的 API Key"
+                    ? "請先設定外部 AI 服務的 API Key 才能開始對話"
                     : !selectedService
-                      ? "請先選擇 AI 服務"
-                      : "輸入您的訊息... (Shift+Enter 換行)"
+                      ? "請先選擇 AI 服務，然後開始對話"
+                      : "請輸入您的問題... (Shift+Enter 換行)"
               }
             />
           </div>
@@ -593,6 +720,45 @@ function ChatPageContent() {
           />
         ))}
       </div>
+
+      {/* 手機版服務選擇器彈窗 */}
+      {showMobileServiceSelector && (
+        <div className="fixed inset-0 z-50 sm:hidden">
+          <div className="fixed inset-0 bg-black bg-opacity-50" onClick={() => setShowMobileServiceSelector(false)} />
+          <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-lg max-h-[80vh] overflow-y-auto">
+            <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+              <h3 className="text-lg font-semibold">服務設定</h3>
+              <button
+                onClick={() => setShowMobileServiceSelector(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-0">
+              <ServiceSelector
+                selectedService={selectedService}
+                onServiceChange={setSelectedService}
+                selectedModel={selectedModel}
+                onModelChange={setSelectedModel}
+                serviceMode={serviceMode}
+                onServiceModeChange={handleServiceModeChange}
+                originalServiceCredentials={originalServiceCredentials}
+                onOriginalServiceCredentialsChange={(newCredentials) => {
+                  setOriginalServiceCredentials(newCredentials);
+                  updateCredentials(newCredentials);
+                }}
+                isFromHomepageAuth={isFromHomepageAuth}
+                showOriginalService={showOriginalService}
+                onShowOriginalServiceChange={setShowOriginalService}
+                hideAuthAfterSuccess={hasUserSentMessage && !isFromHomepageAuth}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

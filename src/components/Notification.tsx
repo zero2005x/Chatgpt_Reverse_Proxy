@@ -130,8 +130,34 @@ export function useNotification() {
     duration?: number;
   }>>([]);
 
+  // 使用計數器確保 ID 唯一性
+  const idCounterRef = useRef(0);
+  // 記錄最近的通知，避免重複
+  const recentNotificationsRef = useRef<Map<string, number>>(new Map());
+
   const addNotification = useCallback((notification: Omit<typeof notifications[0], 'id'>) => {
-    const id = Date.now().toString();
+    const notificationKey = `${notification.type}-${notification.title}-${notification.message}`;
+    const now = Date.now();
+    
+    // 檢查是否在 1 秒內有相同的通知
+    const lastTime = recentNotificationsRef.current.get(notificationKey);
+    if (lastTime && now - lastTime < 1000) {
+      console.log('Duplicate notification prevented:', notificationKey);
+      return; // 防止重複通知
+    }
+    
+    // 記錄這次通知的時間
+    recentNotificationsRef.current.set(notificationKey, now);
+    
+    // 清理超過 5 秒的記錄
+    for (const [key, time] of recentNotificationsRef.current.entries()) {
+      if (now - time > 5000) {
+        recentNotificationsRef.current.delete(key);
+      }
+    }
+    
+    // 組合時間戳和計數器，確保唯一性
+    const id = `${now}-${++idCounterRef.current}`;
     setNotifications(prev => [...prev, { ...notification, id }]);
   }, []);
 

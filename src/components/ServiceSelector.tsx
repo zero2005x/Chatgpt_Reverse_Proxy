@@ -24,6 +24,7 @@ interface ServiceSelectorProps {
   isFromHomepageAuth?: boolean;
   showOriginalService?: boolean;
   onShowOriginalServiceChange?: (show: boolean) => void;
+  hideAuthAfterSuccess?: boolean; // 新增：認證成功後是否隱藏認證區域
 }
 
 const SERVICE_MODELS = {
@@ -81,8 +82,8 @@ const SERVICE_MODELS = {
   ]
 };
 
-export default function ServiceSelector({ 
-  selectedService, 
+export default function ServiceSelector({
+  selectedService,
   onServiceChange,
   selectedModel,
   onModelChange,
@@ -92,7 +93,8 @@ export default function ServiceSelector({
   onOriginalServiceCredentialsChange,
   isFromHomepageAuth = false,
   showOriginalService = false,
-  onShowOriginalServiceChange
+  onShowOriginalServiceChange,
+  hideAuthAfterSuccess = false
 }: ServiceSelectorProps) {
   const { getAvailableServices, getApiKeyByService } = useApiKeys();
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -102,6 +104,7 @@ export default function ServiceSelector({
   const [loginStatus, setLoginStatus] = useState<LoginStatus>({ isLoggedIn: false, status: 'not_checked' });
   const [portalAccess, setPortalAccess] = useState<PortalAccess>({ hasAccess: false, status: 'not_checked' });
   const [isLoading, setIsLoading] = useState(false);
+  const [hideAuthSection, setHideAuthSection] = useState(false); // 新增：控制是否隱藏認證區域
 
   useEffect(() => {
     if (isFromHomepageAuth && originalServiceCredentials?.username && originalServiceCredentials?.password) {
@@ -121,7 +124,7 @@ export default function ServiceSelector({
     }
   };
 
-  const handleCheckLogin = async () => {
+  const handleOriginalServiceAuth = async () => {
     if (!originalServiceCredentials?.username || !originalServiceCredentials?.password) {
       alert('請先填寫用戶名和密碼');
       return;
@@ -129,9 +132,11 @@ export default function ServiceSelector({
 
     setIsLoading(true);
     setLoginStatus({ isLoggedIn: false, status: 'pending' });
+    setPortalAccess({ hasAccess: false, status: 'pending' });
 
     try {
-      const response = await fetch('/api/check-login', {
+      // 檢查登入狀態
+      const loginResponse = await fetch('/api/check-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -141,46 +146,46 @@ export default function ServiceSelector({
         }),
       });
 
-      const data = await response.json();
-      setLoginStatus(data);
+      const loginData = await loginResponse.json();
+      setLoginStatus(loginData);
+
+      if (loginData.status === 'success') {
+        // 如果登入成功，接著檢查存取權限
+        const accessResponse = await fetch('/api/check-access', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: originalServiceCredentials.username,
+            password: originalServiceCredentials.password,
+            baseUrl: originalServiceCredentials.baseUrl
+          }),
+        });
+
+        const accessData = await accessResponse.json();
+        setPortalAccess(accessData);
+        
+        // 如果認證完全成功且設置了自動隱藏，則隱藏認證區域
+        if (accessData.status === 'success' && hideAuthAfterSuccess) {
+          console.log('Authentication successful, hiding auth section as requested');
+          setHideAuthSection(true);
+        }
+      } else {
+        setPortalAccess({ 
+          hasAccess: false, 
+          status: 'failed', 
+          message: '需要先完成登入驗證' 
+        });
+      }
     } catch {
       setLoginStatus({ 
         isLoggedIn: false, 
         status: 'failed', 
-        message: '檢查登入狀態時發生錯誤' 
+        message: '檢查認證狀態時發生錯誤' 
       });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleCheckAccess = async () => {
-    if (!originalServiceCredentials?.username || !originalServiceCredentials?.password) {
-      alert('請先填寫用戶名和密碼');
-      return;
-    }
-
-    setIsLoading(true);
-    setPortalAccess({ hasAccess: false, status: 'pending' });
-
-    try {
-      const response = await fetch('/api/check-access', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: originalServiceCredentials.username,
-          password: originalServiceCredentials.password,
-          baseUrl: originalServiceCredentials.baseUrl
-        }),
-      });
-
-      const data = await response.json();
-      setPortalAccess(data);
-    } catch {
       setPortalAccess({ 
         hasAccess: false, 
         status: 'failed', 
-        message: '檢查存取權限時發生錯誤' 
+        message: '檢查認證狀態時發生錯誤' 
       });
     } finally {
       setIsLoading(false);
@@ -238,7 +243,7 @@ export default function ServiceSelector({
         </div>
       </div>
 
-      {serviceMode === 'original' && (
+      {serviceMode === 'original' && !hideAuthSection && (
         <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           {isFromHomepageAuth && originalServiceCredentials?.username && originalServiceCredentials?.password ? (
             <div className="text-center py-2">
@@ -290,7 +295,7 @@ export default function ServiceSelector({
                         value={originalServiceCredentials?.username || ''}
                         onChange={(e) => handleCredentialsChange('username', e.target.value)}
                         placeholder="輸入用戶名"
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-800 placeholder-gray-500"
                       />
                     </div>
                     <div>
@@ -302,26 +307,18 @@ export default function ServiceSelector({
                         value={originalServiceCredentials?.password || ''}
                         onChange={(e) => handleCredentialsChange('password', e.target.value)}
                         placeholder="輸入密碼"
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-800 placeholder-gray-500"
                       />
                     </div>
                   </div>
 
                   <div className="flex space-x-2 mb-4">
                     <button
-                      onClick={handleCheckLogin}
+                      onClick={handleOriginalServiceAuth}
                       disabled={isLoading}
-                      className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
                     >
-                      {isLoading ? '檢查中...' : '檢查登入狀態'}
-                    </button>
-                    
-                    <button
-                      onClick={handleCheckAccess}
-                      disabled={isLoading}
-                      className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
-                    >
-                      {isLoading ? '檢查中...' : '檢查存取權限'}
+                      {isLoading ? '認證中...' : '原始服務認證'}
                     </button>
                   </div>
 
@@ -417,9 +414,29 @@ export default function ServiceSelector({
         </div>
       )}
 
-      {showAdvanced && serviceMode === 'external' && selectedService && hasApiKey(selectedService) && (
+      {showAdvanced && (
         <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
           <h3 className="text-sm font-medium text-gray-700 mb-3">進階設定</h3>
+          
+          {serviceMode === 'original' && (
+            <div className="text-sm text-gray-600 p-3 bg-blue-50 border border-blue-200 rounded">
+              <p>原始服務模式下的進階設定功能正在開發中</p>
+            </div>
+          )}
+          
+          {serviceMode === 'external' && !selectedService && (
+            <div className="text-sm text-gray-600 p-3 bg-yellow-50 border border-yellow-200 rounded">
+              <p>請先選擇一個外部 AI 服務以顯示進階設定</p>
+            </div>
+          )}
+          
+          {serviceMode === 'external' && selectedService && !hasApiKey(selectedService) && (
+            <div className="text-sm text-gray-600 p-3 bg-orange-50 border border-orange-200 rounded">
+              <p>請先設定 {selectedService} 的 API Key 以啟用進階設定</p>
+            </div>
+          )}
+          
+          {serviceMode === 'external' && selectedService && hasApiKey(selectedService) && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
@@ -455,6 +472,7 @@ export default function ServiceSelector({
               <div className="text-xs text-gray-500 mt-1">目前值: {maxTokens} tokens</div>
             </div>
           </div>
+          )}
         </div>
       )}
     </div>

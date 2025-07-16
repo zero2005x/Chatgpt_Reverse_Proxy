@@ -106,8 +106,14 @@ export default function Home() {
             showError('存取驗證失敗', accessData.message || '無法取得Portal存取權限');
           }
       } else if (loginData.status === 'success' && accessData.status === 'success') {
-          // Only set auto-redirect when authentication is successful
+          // 認證成功，設置自動跳轉
           setShouldAutoRedirect(true);
+          showSuccess('認證成功', '即將跳轉到聊天頁面...');
+          
+          // 延遲2秒後跳轉到聊天頁面
+          setTimeout(() => {
+            window.location.href = '/chat?from=homepage';
+          }, 2000);
       }
 
     } catch (error) {
@@ -132,10 +138,10 @@ export default function Home() {
       <div className="max-w-4xl mx-auto px-4 py-8">
 
         {/* Navigation Buttons */}
-        <div className="flex justify-center space-x-4 mb-8">
+        <div className="flex flex-col sm:flex-row justify-center gap-4 mb-8">
           <Link
             href="/chat"
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-center flex items-center justify-center"
           >
             開始聊天
             {isAuthenticatedStatus && (
@@ -146,13 +152,13 @@ export default function Home() {
           </Link>
           <Link
             href="/settings"
-            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-center"
           >
             API Key 設定
           </Link>
           <Link
             href="/docs"
-            className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+            className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-center"
           >
             格式說明
           </Link>
@@ -195,7 +201,7 @@ export default function Home() {
           ) : (
             <div className="space-y-4">
               {/* Input Form */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     服務器 URL
@@ -204,35 +210,37 @@ export default function Home() {
                     type="text"
                     value={baseUrl}
                     onChange={(e) => setBaseUrl(e.target.value)}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 placeholder-gray-500"
                     placeholder="https://example.com"
                   />
                 </div>
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    用戶名
-                  </label>
-                  <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="輸入用戶名"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    密碼
-                  </label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="輸入密碼"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      用戶名
+                    </label>
+                    <input
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 placeholder-gray-500"
+                      placeholder="輸入用戶名"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      密碼
+                    </label>
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 placeholder-gray-500"
+                      placeholder="輸入密碼"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -241,10 +249,10 @@ export default function Home() {
                 <button
                   onClick={handleCheckBoth}
                   disabled={isLoading}
-                  className="inline-flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="inline-flex items-center justify-center space-x-2 px-6 py-3 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium w-full sm:w-auto"
                 >
                   {isLoading && <LoadingSpinner size="sm" text="" />}
-                  <span>驗證並登入 Portal</span>
+                  <span>{isLoading ? '驗證中...' : '驗證並開始聊天'}</span>
                 </button>
               </div>
             </div>
