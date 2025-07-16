@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// 配置 API 路由以處理較大的請求體
+export const runtime = 'nodejs';
+export const maxDuration = 60; // 60 seconds timeout
+
 interface ChatRequest {
   message: string;
   service: string;
@@ -31,8 +35,12 @@ const AI_ENDPOINTS = {
     headers: (apiKey: string) => ({
       'Content-Type': 'application/json',
     }),
-    payload: (message: string) => ({
-      contents: [{ parts: [{ text: message }] }]
+    payload: (message: string, model = 'gemini-pro', temperature = 0.7, maxTokens = 2000) => ({
+      contents: [{ parts: [{ text: message }] }],
+      generationConfig: {
+        temperature: Math.min(temperature, 1),
+        maxOutputTokens: Math.min(maxTokens, 2048)
+      }
     }),
     parseResponse: (data: any) => data.candidates[0]?.content?.parts[0]?.text || '無回應'
   },
@@ -116,7 +124,22 @@ const AI_ENDPOINTS = {
 
 export async function POST(req: NextRequest) {
   try {
+    // 檢查 Content-Length
+    const contentLength = req.headers.get('content-length');
+    if (contentLength && parseInt(contentLength) > 10 * 1024 * 1024) { // 10MB limit
+      return NextResponse.json({ 
+        error: '請求內容過大，請縮短您的訊息' 
+      }, { status: 413 });
+    }
+
     const { message, service, apiKey, model, temperature, maxTokens, customEndpoint }: ChatRequest & { customEndpoint?: string } = await req.json();
+
+    // 檢查訊息長度
+    if (message && message.length > 50000) { // 50k characters limit
+      return NextResponse.json({ 
+        error: '訊息過長，請縮短您的內容（最多 50,000 字符）' 
+      }, { status:400 });
+    }
 
     if (!message || !service || !apiKey) {
       return NextResponse.json({ 
@@ -146,7 +169,12 @@ export async function POST(req: NextRequest) {
     // 對於 Google API，需要在 URL 中加入 API key
     const finalUrl = service === 'google' ? `${apiUrl}?key=${apiKey}` : apiUrl;
 
-    console.log(`正在呼叫 ${service} API...`);
+    console.log(`正在呼叫 ${service} API...`, {
+      service,
+      model: model || 'default',
+      messageLength: message.length,
+      url: finalUrl
+    });
     
     const response = await fetch(finalUrl, {
       method: 'POST',
