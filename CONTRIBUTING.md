@@ -5,6 +5,7 @@
 ## 🚀 快速開始
 
 ### 1. 設定開發環境
+
 ```bash
 # Fork 並複製專案
 git clone https://github.com/zero2005x/Chatgpt_Reverse_Proxy.git
@@ -20,6 +21,7 @@ cp .env.example .env.local
 ```
 
 ### 2. 啟動開發伺服器
+
 ```bash
 # 開發模式
 npm run dev
@@ -32,6 +34,7 @@ npm start
 ```
 
 ### 3. 建立功能分支
+
 ```bash
 # 從 main 分支建立新分支
 git checkout -b feature/your-feature-name
@@ -43,6 +46,7 @@ git checkout -b bugfix/issue-description
 ## 📋 開發規範
 
 ### 程式碼風格
+
 - 遵循現有的程式碼風格和命名慣例
 - 使用 TypeScript 確保型別安全
 - 所有元件都應該有適當的型別定義
@@ -50,6 +54,7 @@ git checkout -b bugfix/issue-description
 - 使用 Tailwind CSS 進行樣式設計
 
 ### 程式碼品質檢查
+
 ```bash
 # 執行 ESLint 檢查
 npm run lint
@@ -65,6 +70,7 @@ npm run build
 ```
 
 ### 提交訊息規範
+
 使用 [Conventional Commits](https://www.conventionalcommits.org/) 格式：
 
 - `feat:` 新功能
@@ -78,6 +84,7 @@ npm run build
 - `ci:` CI/CD 相關
 
 **範例：**
+
 ```
 feat: 新增 OpenAI GPT-4 服務支援
 fix: 修復聊天記錄重複問題
@@ -86,6 +93,7 @@ refactor: 重構訊息處理邏輯
 ```
 
 ### 分支命名規範
+
 - `feature/功能描述` - 新功能開發
 - `bugfix/問題描述` - 錯誤修復
 - `hotfix/緊急修復` - 緊急修復
@@ -95,6 +103,7 @@ refactor: 重構訊息處理邏輯
 ## 🏗️ 專案架構
 
 ### 目錄結構
+
 ```
 src/
 ├── app/                    # Next.js App Router
@@ -116,6 +125,7 @@ src/
 ```
 
 ### 核心概念
+
 - **多服務支援**: 支援多種 AI 服務 (ChatGPT, Claude, Gemini)
 - **本地優先**: 所有資料儲存在瀏覽器本地
 - **模組化設計**: 元件和功能高度模組化
@@ -124,20 +134,24 @@ src/
 ## 🧪 測試指南
 
 ### 手動測試
+
 在提交 PR 之前，請確保以下功能正常：
 
 1. **基本功能測試**
+
    - [ ] 應用程式正常啟動
    - [ ] 健康檢查端點回應正常 (`/api/health`)
    - [ ] 主頁面載入正常
 
 2. **聊天功能測試**
+
    - [ ] 能夠發送訊息
    - [ ] 訊息正確顯示
    - [ ] 聊天記錄保存正常
    - [ ] 側邊欄功能正常
 
 3. **設定功能測試**
+
    - [ ] API 金鑰管理功能
    - [ ] 服務選擇器功能
    - [ ] 匯入/匯出功能
@@ -148,6 +162,7 @@ src/
    - [ ] Safari 測試通過（如果可能）
 
 ### 自動化測試
+
 ```bash
 # 執行所有檢查
 npm run lint && npm run type-check && npm run build
@@ -156,16 +171,19 @@ npm run lint && npm run type-check && npm run build
 ## 🐛 錯誤回報
 
 ### 回報錯誤前的檢查
+
 1. 確認您使用的是最新版本
 2. 搜尋 [Issues](https://github.com/zero2005x/Chatgpt_Reverse_Proxy/issues) 確認問題未被回報
 3. 檢查瀏覽器控制台是否有錯誤訊息
 
 ### 錯誤回報範本
+
 ```markdown
 **描述**
 簡短描述遇到的問題
 
 **重現步驟**
+
 1. 前往 '...'
 2. 點擊 '....'
 3. 捲動到 '....'
@@ -178,6 +196,7 @@ npm run lint && npm run type-check && npm run build
 如果適用，請新增截圖來說明問題
 
 **環境資訊**
+
 - 作業系統: [例如 Windows 11]
 - 瀏覽器: [例如 Chrome 120]
 - Node.js 版本: [例如 18.17.0]
@@ -186,11 +205,13 @@ npm run lint && npm run type-check && npm run build
 ## 💡 功能建議
 
 ### 提交功能建議前
+
 1. 確認功能符合專案目標
 2. 檢查是否已有類似建議
 3. 考慮實作的複雜度和維護成本
 
 ### 功能建議範本
+
 ```markdown
 **功能描述**
 清楚描述您希望新增的功能
@@ -211,6 +232,7 @@ npm run lint && npm run type-check && npm run build
 ## 📝 Pull Request 流程
 
 ### 提交前檢查清單
+
 - [ ] 程式碼通過 ESLint 檢查
 - [ ] TypeScript 型別檢查通過
 - [ ] 建置成功
@@ -219,11 +241,14 @@ npm run lint && npm run type-check && npm run build
 - [ ] 文檔已更新（如需要）
 
 ### PR 範本
+
 ```markdown
 ## 變更摘要
+
 簡短描述這次 PR 的變更內容
 
 ## 變更類型
+
 - [ ] 錯誤修復
 - [ ] 新功能
 - [ ] 程式碼重構
@@ -232,21 +257,26 @@ npm run lint && npm run type-check && npm run build
 - [ ] 其他：
 
 ## 測試
+
 描述您如何測試這些變更
 
 ## 相關 Issue
+
 關閉 #(issue number)
 
 ## 截圖（如適用）
+
 新增相關截圖
 
 ## 檢查清單
+
 - [ ] 程式碼通過所有檢查
 - [ ] 新增了適當的文檔
 - [ ] 測試涵蓋了新的程式碼
 ```
 
 ### Code Review 過程
+
 1. 自動檢查通過後，維護者會進行程式碼審查
 2. 根據反饋進行必要的修改
 3. 審查通過後，PR 將被合併到主分支
@@ -254,12 +284,14 @@ npm run lint && npm run type-check && npm run build
 ## 🤝 社群準則
 
 ### 行為準則
+
 - 保持尊重和專業的態度
 - 歡迎不同觀點和建設性的討論
 - 幫助新貢獻者融入社群
 - 遵循開源軟體的最佳實踐
 
 ### 溝通管道
+
 - **GitHub Issues**: 錯誤回報和功能建議
 - **GitHub Discussions**: 一般討論和問題
 - **Pull Requests**: 程式碼審查和技術討論
@@ -267,12 +299,14 @@ npm run lint && npm run type-check && npm run build
 ## 📚 開發資源
 
 ### 技術文檔
+
 - [Next.js 文檔](https://nextjs.org/docs)
 - [React 文檔](https://react.dev)
 - [TypeScript 文檔](https://www.typescriptlang.org/docs)
 - [Tailwind CSS 文檔](https://tailwindcss.com/docs)
 
 ### 專案相關
+
 - [API 文檔](./API.md)
 - [部署指南](./DEPLOYMENT.md)
 - [專案說明](./README.md)
@@ -282,6 +316,7 @@ npm run lint && npm run type-check && npm run build
 所有貢獻者都會在專案的 README.md 中被列出。我們感謝每一位貢獻者的付出！
 
 ### 貢獻者類型
+
 - **程式碼貢獻**: 新功能、錯誤修復、效能改善
 - **文檔貢獻**: 文檔撰寫、翻譯、範例
 - **設計貢獻**: UI/UX 設計、圖示、品牌
@@ -295,17 +330,21 @@ npm run lint && npm run type-check && npm run build
 ## 🔧 Development Setup
 
 ### Environment Variables
+
 Copy `.env.example` to `.env.local` and configure:
+
 ```bash
 cp .env.example .env.local
 ```
 
 ### Development Server
+
 ```bash
 npm run dev
 ```
 
 ### Build and Test
+
 ```bash
 npm run build
 npm run lint
@@ -322,31 +361,38 @@ npm run lint
    - Screenshots if UI changes are involved
 
 ### Pull Request Template
+
 ```markdown
 ## Description
+
 Brief description of changes
 
 ## Type of Change
+
 - [ ] Bug fix
 - [ ] New feature
 - [ ] Breaking change
 - [ ] Documentation update
 
 ## Testing
+
 - [ ] Tests pass
 - [ ] Code builds successfully
 - [ ] Manually tested
 
 ## Screenshots (if applicable)
+
 Add screenshots here
 
 ## Related Issues
+
 Closes #123
 ```
 
 ## 🐛 Bug Reports
 
 When reporting bugs, please include:
+
 - **Environment details** (OS, browser, Node.js version)
 - **Steps to reproduce**
 - **Expected vs actual behavior**
@@ -356,6 +402,7 @@ When reporting bugs, please include:
 ## 💡 Feature Requests
 
 For new features, please:
+
 - **Check existing issues** first
 - **Describe the problem** your feature solves
 - **Provide implementation details** if possible
@@ -364,6 +411,7 @@ For new features, please:
 ## 🔒 Security
 
 If you discover a security vulnerability:
+
 - **DO NOT** open a public issue
 - **Email** the maintainers directly
 - **Wait for confirmation** before disclosing
@@ -371,6 +419,7 @@ If you discover a security vulnerability:
 ## 📖 Documentation
 
 Help improve documentation by:
+
 - **Fixing typos** and grammar
 - **Adding examples** and use cases
 - **Updating outdated information**
@@ -379,6 +428,7 @@ Help improve documentation by:
 ## 🌟 Recognition
 
 Contributors will be recognized in:
+
 - **README.md** contributors section
 - **GitHub releases** changelog
 - **Special thanks** for significant contributions

@@ -1,11 +1,11 @@
-const http = require('http');
+const http = require("http");
 
 const options = {
-  hostname: 'localhost',
+  hostname: "localhost",
   port: process.env.PORT || 3000,
-  path: '/api/health',
-  method: 'GET',
-  timeout: 2000
+  path: "/api/health",
+  method: "GET",
+  timeout: 2000,
 };
 
 const request = http.request(options, (response) => {
@@ -17,13 +17,13 @@ const request = http.request(options, (response) => {
   }
 });
 
-request.on('error', (error) => {
-  console.error('Health check failed:', error.message);
+request.on("error", (error) => {
+  console.error("Health check failed:", error.message);
   process.exit(1);
 });
 
-request.on('timeout', () => {
-  console.error('Health check timeout');
+request.on("timeout", () => {
+  console.error("Health check timeout");
   request.destroy();
   process.exit(1);
 });

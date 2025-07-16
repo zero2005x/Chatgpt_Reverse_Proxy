@@ -344,7 +344,7 @@ function ChatPageContent() {
             apiKey: apiKey?.key,
             model: selectedModel,
             temperature: 0.7,
-            maxTokens: 1000
+            maxTokens: 2000
           }),
         }).catch(error => {
           console.error('AI chat request failed:', error);

@@ -41,7 +41,7 @@ POST /api/check-login
 ```json
 {
   "username": "your-username",
-  "password": "your-password", 
+  "password": "your-password",
   "baseUrl": "https://dgb01p240102.japaneast.cloudapp.azure.com"
 }
 ```
@@ -188,15 +188,15 @@ POST /api/ai-chat
 
 **支援的服務類型**
 
-| Service | Models | Notes |
-|---------|--------|-------|
-| `openai` | gpt-4o, gpt-4o-mini, gpt-4-turbo, gpt-3.5-turbo | OpenAI 官方模型 |
-| `google` | gemini-1.5-pro, gemini-1.5-flash, gemini-1.0-pro | Google Gemini 系列 |
-| `anthropic` | claude-3.5-sonnet, claude-3-opus, claude-3-sonnet | Anthropic Claude 系列 |
-| `mistral` | mistral-large-latest, open-mixtral-8x22b | Mistral AI 模型 |
-| `cohere` | command-r-plus, command-r, command-light | Cohere 指令模型 |
-| `groq` | llama3-70b-8192, llama3-8b-8192, mixtral-8x7b-32768 | Groq 加速推理 |
-| `xai` | grok-4-0709, grok-3, grok-3-mini | xAI Grok 系列 |
+| Service     | Models                                              | Notes                 |
+| ----------- | --------------------------------------------------- | --------------------- |
+| `openai`    | gpt-4o, gpt-4o-mini, gpt-4-turbo, gpt-3.5-turbo     | OpenAI 官方模型       |
+| `google`    | gemini-1.5-pro, gemini-1.5-flash, gemini-1.0-pro    | Google Gemini 系列    |
+| `anthropic` | claude-3.5-sonnet, claude-3-opus, claude-3-sonnet   | Anthropic Claude 系列 |
+| `mistral`   | mistral-large-latest, open-mixtral-8x22b            | Mistral AI 模型       |
+| `cohere`    | command-r-plus, command-r, command-light            | Cohere 指令模型       |
+| `groq`      | llama3-70b-8192, llama3-8b-8192, mixtral-8x7b-32768 | Groq 加速推理         |
+| `xai`       | grok-4-0709, grok-3, grok-3-mini                    | xAI Grok 系列         |
 
 **成功回應**
 
@@ -229,16 +229,16 @@ POST /api/ai-chat
 
 ## 錯誤代碼
 
-| 代碼 | 描述 | HTTP狀態 |
-|------|------|----------|
-| `INVALID_API_KEY` | API Key 無效 | 401 |
-| `RATE_LIMIT_EXCEEDED` | 超過請求限制 | 429 |
-| `SERVICE_UNAVAILABLE` | 服務暫時無法使用 | 503 |
-| `INVALID_REQUEST` | 請求參數錯誤 | 400 |
-| `PORTAL_TIMEOUT` | Portal 服務逾時 | 504 |
-| `AUTH_FAILED` | 認證失敗 | 401 |
-| `ACCESS_DENIED` | 存取被拒絕 | 403 |
-| `CONTENT_TOO_LARGE` | 內容過大 | 413 |
+| 代碼                  | 描述             | HTTP 狀態 |
+| --------------------- | ---------------- | --------- |
+| `INVALID_API_KEY`     | API Key 無效     | 401       |
+| `RATE_LIMIT_EXCEEDED` | 超過請求限制     | 429       |
+| `SERVICE_UNAVAILABLE` | 服務暫時無法使用 | 503       |
+| `INVALID_REQUEST`     | 請求參數錯誤     | 400       |
+| `PORTAL_TIMEOUT`      | Portal 服務逾時  | 504       |
+| `AUTH_FAILED`         | 認證失敗         | 401       |
+| `ACCESS_DENIED`       | 存取被拒絕       | 403       |
+| `CONTENT_TOO_LARGE`   | 內容過大         | 413       |
 
 ## Rate Limiting
 
@@ -303,18 +303,18 @@ interface ChatRequest {
 }
 
 async function sendMessage(request: ChatRequest) {
-  const response = await fetch('/api/ai-chat', {
-    method: 'POST',
+  const response = await fetch("/api/ai-chat", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json'
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify(request)
+    body: JSON.stringify(request),
   });
-  
+
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
-  
+
   return await response.json();
 }
 
@@ -326,12 +326,12 @@ try {
     apiKey: "sk-proj-...",
     model: "gpt-4o",
     temperature: 0.7,
-    maxTokens: 1000
+    maxTokens: 1000,
   });
-  
-  console.log('AI Response:', result.response);
+
+  console.log("AI Response:", result.response);
 } catch (error) {
-  console.error('Error:', error);
+  console.error("Error:", error);
 }
 ```
 
@@ -343,7 +343,7 @@ import json
 
 def send_message(message, service, api_key, model=None, temperature=0.7, max_tokens=1000):
     url = "https://your-domain.vercel.app/api/ai-chat"
-    
+
     payload = {
         "message": message,
         "service": service,
@@ -352,9 +352,9 @@ def send_message(message, service, api_key, model=None, temperature=0.7, max_tok
         "temperature": temperature,
         "maxTokens": max_tokens
     }
-    
+
     response = requests.post(url, json=payload)
-    
+
     if response.status_code == 200:
         return response.json()
     else:
@@ -370,7 +370,7 @@ try:
         temperature=0.7,
         max_tokens=1000
     )
-    
+
     print("AI Response:", result["response"])
 except Exception as e:
     print("Error:", e)
@@ -410,35 +410,36 @@ curl -X POST https://your-domain.vercel.app/api/chat \
 ```typescript
 async function handleApiCall(request: ChatRequest) {
   try {
-    const response = await fetch('/api/ai-chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(request)
+    const response = await fetch("/api/ai-chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(request),
     });
-    
+
     const data = await response.json();
-    
+
     if (!response.ok) {
       // 處理不同類型的錯誤
       switch (data.code) {
-        case 'RATE_LIMIT_EXCEEDED':
+        case "RATE_LIMIT_EXCEEDED":
           // 等待後重試
-          await new Promise(resolve => setTimeout(resolve, data.retryAfter * 1000));
+          await new Promise((resolve) =>
+            setTimeout(resolve, data.retryAfter * 1000)
+          );
           return handleApiCall(request);
-          
-        case 'INVALID_API_KEY':
+
+        case "INVALID_API_KEY":
           // 提示使用者更新 API Key
-          throw new Error('請檢查 API Key 是否正確');
-          
+          throw new Error("請檢查 API Key 是否正確");
+
         default:
-          throw new Error(data.error || 'Unknown error');
+          throw new Error(data.error || "Unknown error");
       }
     }
-    
+
     return data;
-    
   } catch (error) {
-    console.error('API call failed:', error);
+    console.error("API call failed:", error);
     throw error;
   }
 }
@@ -453,10 +454,10 @@ async function retryableApiCall(request: ChatRequest, maxRetries = 3) {
       return await sendMessage(request);
     } catch (error) {
       if (attempt === maxRetries) throw error;
-      
+
       // 指數退避
       const delay = Math.pow(2, attempt) * 1000;
-      await new Promise(resolve => setTimeout(resolve, delay));
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 }
@@ -467,6 +468,7 @@ async function retryableApiCall(request: ChatRequest, maxRetries = 3) {
 ### Q: 如何獲取 API Key？
 
 **A**: 前往各 AI 服務提供商的官方網站註冊並獲取 API Key：
+
 - OpenAI: https://platform.openai.com/api-keys
 - Google: https://makersuite.google.com/app/apikey
 - Anthropic: https://console.anthropic.com/
@@ -474,6 +476,7 @@ async function retryableApiCall(request: ChatRequest, maxRetries = 3) {
 ### Q: Portal 服務連線失敗怎麼辦？
 
 **A**: 請檢查：
+
 1. 帳號密碼是否正確
 2. baseUrl 是否可以正常存取
 3. 網路連線是否正常
@@ -490,6 +493,7 @@ async function retryableApiCall(request: ChatRequest, maxRetries = 3) {
 ## 更新日誌
 
 ### v1.0.0 (2025-01-16)
+
 - 首次發布 API 文檔
 - 支援 Portal 服務與外部 AI 服務
 - 實施 Rate Limiting 與安全防護

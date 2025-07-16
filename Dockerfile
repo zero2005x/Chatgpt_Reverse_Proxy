@@ -9,9 +9,9 @@ FROM base AS deps
 # 檢查 package.json 和 package-lock.json
 COPY package.json package-lock.json* ./
 RUN \
-  if [ -f package-lock.json ]; then npm ci --only=production; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
+    if [ -f package-lock.json ]; then npm ci --only=production; \
+    else echo "Lockfile not found." && exit 1; \
+    fi
 
 # 建置階段
 FROM base AS builder
@@ -76,7 +76,7 @@ ENV HOSTNAME "0.0.0.0"
 
 # 健康檢查
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node healthcheck.js
+    CMD node healthcheck.js
 
 # 啟動應用程式
 CMD ["node", "server.js"]

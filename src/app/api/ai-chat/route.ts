@@ -17,7 +17,7 @@ const AI_ENDPOINTS = {
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     }),
-    payload: (message: string, model = 'gpt-3.5-turbo', temperature = 0.7, maxTokens = 1000) => ({
+    payload: (message: string, model = 'gpt-3.5-turbo', temperature = 0.7, maxTokens = 2000) => ({
       model,
       messages: [{ role: 'user', content: message }],
       temperature,
@@ -43,7 +43,7 @@ const AI_ENDPOINTS = {
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     }),
-    payload: (message: string, model = 'mistral-medium', temperature = 0.7, maxTokens = 1000) => ({
+    payload: (message: string, model = 'mistral-medium', temperature = 0.7, maxTokens = 2000) => ({
       model,
       messages: [{ role: 'user', content: message }],
       temperature,
@@ -58,7 +58,7 @@ const AI_ENDPOINTS = {
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     }),
-    payload: (message: string, model = 'command', temperature = 0.7, maxTokens = 1000) => ({
+    payload: (message: string, model = 'command', temperature = 0.7, maxTokens = 2000) => ({
       model,
       prompt: message,
       temperature,
@@ -73,7 +73,7 @@ const AI_ENDPOINTS = {
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     }),
-    payload: (message: string, model = 'mixtral-8x7b-32768', temperature = 0.7, maxTokens = 1000) => ({
+    payload: (message: string, model = 'mixtral-8x7b-32768', temperature = 0.7, maxTokens = 2000) => ({
       model,
       messages: [{ role: 'user', content: message }],
       temperature,
@@ -88,7 +88,7 @@ const AI_ENDPOINTS = {
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     }),
-    payload: (message: string, model = 'grok-4-0709', temperature = 0.7, maxTokens = 1000) => ({
+    payload: (message: string, model = 'grok-4-0709', temperature = 0.7, maxTokens = 3000) => ({
       model,
       messages: [{ role: 'user', content: message }],
       temperature,
@@ -104,7 +104,7 @@ const AI_ENDPOINTS = {
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     }),
-    payload: (message: string, model = 'gpt-3.5-turbo', temperature = 0.7, maxTokens = 1000) => ({
+    payload: (message: string, model = 'gpt-3.5-turbo', temperature = 0.7, maxTokens = 2000) => ({
       model,
       messages: [{ role: 'user', content: message }],
       temperature,

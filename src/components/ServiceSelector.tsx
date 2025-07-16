@@ -345,7 +345,7 @@ export default function ServiceSelector({
                       <h4 className="font-medium text-gray-800 mb-2 text-sm">Portal 資料</h4>
                       <div className="max-h-32 overflow-y-auto">
                         {Array.isArray(portalAccess.data) ? (
-                          <ul className="space-y-1 text-xs text-gray-600">
+                          <ul className="space-y-1 text-xs text-gray-800">
                             {portalAccess.data.map((item, index) => (
                               <li key={index} className="border-b border-gray-100 pb-1">
                                 {Array.isArray(item) ? item.join(' | ') : item}
@@ -353,7 +353,7 @@ export default function ServiceSelector({
                             ))}
                           </ul>
                         ) : (
-                          <p className="text-xs text-gray-600">無法顯示資料</p>
+                          <p className="text-xs text-gray-800">無法顯示資料</p>
                         )}
                       </div>
                     </div>
@@ -419,19 +419,19 @@ export default function ServiceSelector({
           <h3 className="text-sm font-medium text-gray-700 mb-3">進階設定</h3>
           
           {serviceMode === 'original' && (
-            <div className="text-sm text-gray-600 p-3 bg-blue-50 border border-blue-200 rounded">
+            <div className="text-sm text-gray-700 p-3 bg-blue-50 border border-blue-200 rounded">
               <p>原始服務模式下的進階設定功能正在開發中</p>
             </div>
           )}
           
           {serviceMode === 'external' && !selectedService && (
-            <div className="text-sm text-gray-600 p-3 bg-yellow-50 border border-yellow-200 rounded">
+            <div className="text-sm text-gray-700 p-3 bg-yellow-50 border border-yellow-200 rounded">
               <p>請先選擇一個外部 AI 服務以顯示進階設定</p>
             </div>
           )}
           
           {serviceMode === 'external' && selectedService && !hasApiKey(selectedService) && (
-            <div className="text-sm text-gray-600 p-3 bg-orange-50 border border-orange-200 rounded">
+            <div className="text-sm text-gray-700 p-3 bg-orange-50 border border-orange-200 rounded">
               <p>請先設定 {selectedService} 的 API Key 以啟用進階設定</p>
             </div>
           )}
@@ -452,7 +452,7 @@ export default function ServiceSelector({
                 onChange={(e) => setTemperature(parseFloat(e.target.value))}
                 className="w-full"
               />
-              <div className="text-xs text-gray-500 mt-1">目前值: {temperature}</div>
+              <div className="text-xs text-gray-700 mt-1">目前值: {temperature}</div>
             </div>
             
             <div>
@@ -469,7 +469,7 @@ export default function ServiceSelector({
                 onChange={(e) => setMaxTokens(parseInt(e.target.value))}
                 className="w-full"
               />
-              <div className="text-xs text-gray-500 mt-1">目前值: {maxTokens} tokens</div>
+              <div className="text-xs text-gray-700 mt-1">目前值: {maxTokens} tokens</div>
             </div>
           </div>
           )}
