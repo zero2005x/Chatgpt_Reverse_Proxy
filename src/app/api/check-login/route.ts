@@ -1,21 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { authLogger } from '@/utils/logger';
+import { ErrorHandler, AuthenticationError, NetworkError } from '@/utils/errorHandling';
+import { CommonValidators } from '@/utils/validation';
 
-async function performLogin(username: string, password: string): Promise<string | null> {
+async function performLogin(username: string, password: string, baseUrl?: string): Promise<string | null> {
+  const logger = authLogger.child('performLogin');
+  const actualBaseUrl = baseUrl || 'https://dgb01p240102.japaneast.cloudapp.azure.com';
+  
   try {
-    const baseUrl = 'https://dgb01p240102.japaneast.cloudapp.azure.com';
-    const loginUrl = `${baseUrl}/wise/wiseadm/s/subadmin/2595af81-c151-47eb-9f15-d17e0adbe3b4/login`;
-    
-    const loginPageResponse = await fetch(loginUrl, {
-      method: 'GET',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-        'Accept-Language': 'zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7',
-      },
+    logger.info('開始登入程序', { 
+      username: username.substring(0, 3) + '***',
+      baseUrl: actualBaseUrl.replace(/\/\/.*@/, '//***@')
     });
     
+    const loginUrl = `${actualBaseUrl}/wise/wiseadm/s/subadmin/2595af81-c151-47eb-9f15-d17e0adbe3b4/login`;
+    
+    logger.debug('發送登入頁面請求', { loginUrl });
+    
+    const loginPageResponse = await ErrorHandler.withTimeout(
+      () => fetch(loginUrl, {
+        method: 'GET',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+          'Accept-Language': 'zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7',
+        },
+      }),
+      15000,
+      '登入頁面請求超時'
+    );
+    
     if (!loginPageResponse.ok) {
-      return null;
+      logger.warn('登入頁面請求失敗', { 
+        status: loginPageResponse.status, 
+        statusText: loginPageResponse.statusText 
+      });
+      throw new NetworkError(`無法存取登入頁面: ${loginPageResponse.status}`);
     }
     
     const initialCookies = loginPageResponse.headers.get('set-cookie');

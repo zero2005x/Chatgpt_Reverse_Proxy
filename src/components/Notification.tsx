@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { uiLogger } from '@/utils/logger';
 
 interface NotificationProps {
   type: 'success' | 'error' | 'warning' | 'info';
@@ -17,6 +18,7 @@ export default function Notification({
   onClose,
   className = ''
 }: NotificationProps) {
+  const logger = uiLogger.child('Notification');
   const [isVisible, setIsVisible] = useState(true);
   const onCloseRef = useRef(onClose);
 
@@ -25,27 +27,43 @@ export default function Notification({
     onCloseRef.current = onClose;
   }, [onClose]);
 
-  // Memoize the close handler to prevent unnecessary re-renders
-  const handleAutoClose = useCallback(() => {
-    setIsVisible(false);
-    setTimeout(() => onCloseRef.current?.(), 300);
-  }, []); // No dependencies needed since we use ref
+  // Enhanced close handler with error handling
+  const handleClose = useCallback(() => {
+    try {
+      setIsVisible(false);
+      setTimeout(() => {
+        if (onCloseRef.current) {
+          onCloseRef.current();
+        }
+      }, 300);
+    } catch (error) {
+      logger.error('關閉通知時發生錯誤', error);
+      // Still try to close even if there's an error
+      if (onCloseRef.current) {
+        onCloseRef.current();
+      }
+    }
+  }, [logger]);
 
-  // Setup auto-close timer
+  // Setup auto-close timer with error handling
   useEffect(() => {
     if (duration > 0) {
       const timer = setTimeout(() => {
-        setIsVisible(false);
-        setTimeout(() => onCloseRef.current?.(), 300);
+        try {
+          setIsVisible(false);
+          setTimeout(() => {
+            if (onCloseRef.current) {
+              onCloseRef.current();
+            }
+          }, 300);
+        } catch (error) {
+          logger.error('自動關閉通知時發生錯誤', error);
+        }
       }, duration);
+      
       return () => clearTimeout(timer);
     }
-  }, [duration]);
-
-  const handleClose = useCallback(() => {
-    setIsVisible(false);
-    setTimeout(() => onCloseRef.current?.(), 300);
-  }, []); // No dependencies needed since we use ref
+  }, [duration, logger]);
 
   const typeConfig = {
     success: {

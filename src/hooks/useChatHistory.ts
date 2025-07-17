@@ -1,32 +1,43 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Message, ChatSession } from '@/types/message';
 import { v4 as uuidv4 } from 'uuid';
+import { chatLogger } from '@/utils/logger';
+import { ErrorHandler, withErrorBoundary } from '@/utils/errorHandling';
 
 export function useChatHistory() {
+  const logger = chatLogger.child('useChatHistory');
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false); // 追蹤初始化狀態
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // 簡化的設置當前會話ID函數，避免循環依賴
+  // Enhanced session ID update with error handling
   const updateCurrentSessionId = useCallback((sessionId: string | null) => {
-    console.log('Updating current session ID:', sessionId);
-    setCurrentSessionId(sessionId);
-    if (sessionId) {
-      localStorage.setItem('currentSessionId', sessionId);
-    } else {
-      localStorage.removeItem('currentSessionId');
+    try {
+      logger.debug('更新當前會話 ID', { sessionId });
+      setCurrentSessionId(sessionId);
+      
+      if (sessionId) {
+        localStorage.setItem('currentSessionId', sessionId);
+      } else {
+        localStorage.removeItem('currentSessionId');
+      }
+    } catch (error) {
+      logger.error('更新會話 ID 失敗', error, { sessionId });
     }
-  }, []);
+  }, [logger]);
 
   const loadSessions = useCallback(() => {
-    if (typeof window === 'undefined') return; // SSR 檢查
+    if (typeof window === 'undefined') return; // SSR check
     
     try {
+      logger.debug('載入聊天會話');
+      setIsLoading(true);
+      
       const savedSessions = localStorage.getItem('chatSessions');
       const savedCurrentSessionId = localStorage.getItem('currentSessionId');
       
-      console.log('Loading sessions from localStorage:', {
+      logger.debug('載入會話資料', {
         hasSavedSessions: !!savedSessions,
         savedCurrentSessionId,
         savedSessionsLength: savedSessions ? JSON.parse(savedSessions).length : 0,
@@ -63,56 +74,63 @@ export function useChatHistory() {
         }, []);
         
         if (uniqueSessions.length > 0) {
-          console.log('Valid sessions found, updating state:', {
+          logger.info('找到有效會話，更新狀態', {
             count: uniqueSessions.length,
             totalMessages: uniqueSessions.reduce((total: number, s: any) => total + s.messages.length, 0),
             savedCurrentId: savedCurrentSessionId
           });
 
-          // 立即更新 sessions 狀態
+          // Update sessions state immediately
           setSessions(uniqueSessions);
           
-          // 恢復當前會話 ID
+          // Restore current session ID
           if (savedCurrentSessionId && uniqueSessions.find((s: any) => s.id === savedCurrentSessionId)) {
             setCurrentSessionId(savedCurrentSessionId);
-            console.log('Restored current session:', savedCurrentSessionId);
+            logger.debug('恢復當前會話', { sessionId: savedCurrentSessionId });
           } else if (uniqueSessions.length > 0) {
-            // 如果沒有有效的當前會話，選擇最新的一個
+            // If no valid current session, choose the latest one
             const latestSession = uniqueSessions[0];
             setCurrentSessionId(latestSession.id);
             localStorage.setItem('currentSessionId', latestSession.id);
-            console.log('Set current session to latest:', latestSession.id);
+            logger.debug('設置最新會話為當前會話', { sessionId: latestSession.id });
           }
         } else {
-          console.warn('No valid sessions found in saved data');
+          logger.warn('保存的資料中沒有有效會話');
           setSessions([]);
           setCurrentSessionId(null);
           localStorage.removeItem('currentSessionId');
         }
       } else {
-        console.log('No saved sessions found, starting fresh');
+        logger.info('沒有找到保存的會話，從頭開始');
         setSessions([]);
         setCurrentSessionId(null);
         localStorage.removeItem('currentSessionId');
       }
+      
+      setIsInitialized(true);
     } catch (error) {
-      console.error('載入聊天紀錄失敗:', error);
-      // 清除損壞的數據但保留備份
+      logger.error('載入聊天紀錄失敗', error);
+      
+      // Clear corrupted data but keep backup
       try {
         const corruptedData = localStorage.getItem('chatSessions');
         if (corruptedData) {
           localStorage.setItem('chatSessions_backup', corruptedData);
-          console.log('Corrupted data backed up to chatSessions_backup');
+          logger.info('已備份損壞的資料到 chatSessions_backup');
         }
         localStorage.removeItem('chatSessions');
         localStorage.removeItem('currentSessionId');
       } catch (clearError) {
-        console.error('Failed to clear corrupted data:', clearError);
+        logger.error('清除損壞資料失敗', clearError);
       }
+      
       setSessions([]);
       setCurrentSessionId(null);
+      setIsInitialized(true);
+    } finally {
+      setIsLoading(false);
     }
-  }, [setSessions, setCurrentSessionId]);
+  }, [logger]);
 
   // 載入聊天紀錄 - 只在首次掛載時執行
   useEffect(() => {

@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { LoginStatus, PortalAccess } from '@/types/message';
+import { uiLogger } from '@/utils/logger';
+import { ErrorHandler } from '@/utils/errorHandling';
 
 interface PortalCredentials {
   username: string;
@@ -17,49 +19,53 @@ interface PortalAuthState {
   timestamp: number;
 }
 
-// 簡單的加密/解密函數（用於客戶端儲存）- 支援 UTF-8
+// Enhanced encryption/decryption with better error handling
 const encryptCredentials = (data: string): string => {
+  const logger = uiLogger.child('encryptCredentials');
+  
   try {
-    // 使用 Base64 編碼 UTF-8 字符串
+    // Use Base64 encoding for UTF-8 strings
     const encoded = btoa(unescape(encodeURIComponent(data)));
     
-    // 對 Base64 字符串進行簡單的 XOR 加密
+    // Simple XOR encryption on Base64 string
     const encrypted = encoded.split('').map(char => 
       String.fromCharCode(char.charCodeAt(0) ^ 123)
     ).join('');
     
-    // 再次使用 Base64 編碼
+    // Base64 encode again
     return btoa(encrypted);
   } catch (error) {
-    console.error('加密失敗:', error);
-    // 如果加密失敗，使用簡單的 Base64 編碼
+    logger.error('加密失敗', error);
+    // Fallback encryption
     try {
       return btoa(unescape(encodeURIComponent(data)));
     } catch (fallbackError) {
-      console.error('備用加密也失敗:', fallbackError);
-      return data; // 最後返回原始值
+      logger.error('備用加密也失敗', fallbackError);
+      return data; // Return original if all encryption fails
     }
   }
 };
 
 const decryptCredentials = (encryptedData: string): string => {
+  const logger = uiLogger.child('decryptCredentials');
+  
   try {
-    // 嘗試新的解密方法
+    // Try new decryption method
     const decoded = atob(encryptedData);
     const decrypted = decoded.split('').map(char => 
       String.fromCharCode(char.charCodeAt(0) ^ 123)
     ).join('');
     
-    // 解碼 UTF-8
+    // Decode UTF-8
     return decodeURIComponent(escape(atob(decrypted)));
   } catch (error) {
-    console.log('新格式解密失敗，嘗試舊格式:', error);
+    logger.warn('新格式解密失敗，嘗試舊格式', { error: String(error) });
     try {
-      // 嘗試舊格式（簡單的 Base64）
+      // Fallback to old format
       return decodeURIComponent(escape(atob(encryptedData)));
     } catch (fallbackError) {
-      console.error('所有解密方法都失敗:', fallbackError);
-      return encryptedData; // 如果都失敗，返回原始值
+      logger.error('所有解密方法都失敗', fallbackError);
+      return encryptedData; // Return original if all decryption fails
     }
   }
 };
@@ -68,6 +74,7 @@ const decryptCredentials = (encryptedData: string): string => {
 const SESSION_TIMEOUT = 30 * 60 * 1000;
 
 export function usePortalAuth() {
+  const logger = uiLogger.child('usePortalAuth');
   const [credentials, setCredentials] = useState<PortalCredentials | null>(null);
   const [loginStatus, setLoginStatus] = useState<LoginStatus>({ isLoggedIn: false, status: 'not_checked' });
   const [portalAccess, setPortalAccess] = useState<PortalAccess>({ hasAccess: false, status: 'not_checked' });
@@ -80,10 +87,11 @@ export function usePortalAuth() {
       setLoginStatus({ isLoggedIn: false, status: 'not_checked' });
       setPortalAccess({ hasAccess: false, status: 'not_checked' });
       setIsFromHomepageAuth(false);
+      logger.info('Portal 認證已清除');
     } catch (error) {
-      console.error('清除 Portal 認證失敗:', error);
+      logger.error('清除 Portal 認證失敗', error);
     }
-  }, []);
+  }, [logger]);
 
   const loadPortalAuth = useCallback(() => {
     try {
