@@ -97,8 +97,10 @@ function ChatPageContent() {
     }
 
     // 重置標記，這樣重新整理頁面時不會再次觸發
-    consumeIsFromHomepageAuth();
-  }, [searchParams, isFromHomepageAuth, consumeIsFromHomepageAuth]); // 移除 credentials 等依賴，避免重複觸發
+    if (isFromHomepageAuth) {
+      consumeIsFromHomepageAuth();
+    }
+  }, [searchParams]); // Remove isFromHomepageAuth and consumeIsFromHomepageAuth dependencies
 
   // 單獨處理認證信息的更新，不影響服務模式選擇
   useEffect(() => {

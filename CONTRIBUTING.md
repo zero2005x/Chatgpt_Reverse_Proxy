@@ -108,21 +108,60 @@ refactor: 重構訊息處理邏輯
 src/
 ├── app/                    # Next.js App Router
 │   ├── api/               # API 路由
+│   │   ├── ai-chat/       # 外部 AI 服務 API
+│   │   ├── chat/          # Portal 聊天 API
+│   │   ├── chat-enhanced/ # 增強型聊天 API
+│   │   ├── check-access/  # 存取權限檢查 API
+│   │   ├── check-login/   # 登入狀態檢查 API
+│   │   ├── health/        # 基本健康檢查 API
+│   │   └── health-enhanced/ # 增強型健康檢查 API
 │   ├── chat/              # 聊天頁面
 │   ├── docs/              # 文檔頁面
 │   └── settings/          # 設定頁面
 ├── components/            # React 元件
+│   ├── ApiKeyForm.tsx     # API Key 新增表單
+│   ├── ApiKeyImportExport.tsx # API Key 匯入匯出
+│   ├── ApiKeyList.tsx     # API Key 列表
+│   ├── ApiKeyListItem.tsx # API Key 單一項目
+│   ├── ApiKeyModal.tsx    # API Key 新增/編輯彈窗
 │   ├── ChatInput.tsx      # 聊天輸入
 │   ├── ChatMessage.tsx    # 訊息顯示
 │   ├── ChatSidebar.tsx    # 側邊欄
-│   └── ...
+│   ├── InfoPanel.tsx      # 資訊面板
+│   ├── InlineChatBox.tsx  # 內嵌聊天組件
+│   ├── LoadingSpinner.tsx # 載入動畫
+│   ├── NavigationHeader.tsx # 統一導航標頭
+│   ├── Notification.tsx   # 通知系統
+│   ├── ServiceSelector.tsx # 服務選擇器
+│   ├── ServiceStatusIndicator.tsx # 服務狀態指示器
+│   └── Tooltip.tsx        # 互動式說明工具提示
+├── contexts/              # React Context
+│   └── ChatContext.tsx    # 聊天狀態管理
 ├── hooks/                 # 自定義 Hooks
-│   ├── useApiKeys.ts      # API 金鑰管理
-│   ├── useChatHistory.ts  # 聊天記錄
+│   ├── useApiKeys.ts      # API Key 管理
+│   ├── useApiKeyImportExport.ts # API Key 匯入匯出
+│   ├── useChatHistory.ts  # 聊天記錄管理
+│   ├── useEnhancedChat.ts # 增強型聊天功能
+│   ├── useNotification.ts # 通知系統
 │   └── usePortalAuth.ts   # Portal 認證
-└── types/                 # 型別定義
-    └── message.ts         # 訊息型別
+├── types/                 # TypeScript 類型定義
+│   └── message.ts         # 訊息與狀態類型
+└── utils/                 # 工具函數
+    ├── apiRetry.ts        # API 重試機制
+    ├── configManager.ts   # 配置管理
+    ├── errorHandling.ts   # 錯誤處理
+    ├── logger.ts          # 日誌記錄
+    ├── performance.ts     # 效能監控
+    ├── requestMiddleware.ts # 請求中介軟體
+    └── validation.ts      # 輸入驗證
 ```
+
+│ ├── useChatHistory.ts # 聊天記錄
+│ └── usePortalAuth.ts # Portal 認證
+└── types/ # 型別定義
+└── message.ts # 訊息型別
+
+````
 
 ### 核心概念
 
@@ -166,7 +205,20 @@ src/
 ```bash
 # 執行所有檢查
 npm run lint && npm run type-check && npm run build
-```
+
+# 開發環境健康檢查
+npm run dev &
+sleep 5
+curl http://localhost:3000/api/health
+
+# API 測試
+curl -X POST http://localhost:3000/api/check-login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"test","password":"test","baseUrl":"https://dgb01p240102.japaneast.cloudapp.azure.com"}'
+
+# 增強型健康檢查
+curl "http://localhost:3000/api/health-enhanced?extensive=true"
+````
 
 ## 🐛 錯誤回報
 

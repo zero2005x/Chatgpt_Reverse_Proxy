@@ -18,13 +18,14 @@
 
 - **OpenAI**：GPT-4o, GPT-4o-mini, GPT-4-turbo, GPT-3.5-turbo
 - **Google**：Gemini-1.5-pro, Gemini-1.5-flash, Gemini-1.0-pro
-- **Anthropic**：Claude-3.5-sonnet, Claude-3-opus, Claude-3-sonnet, Claude-3-haiku
-- **Mistral**：Mistral-large-latest, Open-mixtral-8x22b, Codestral-latest
+- **Mistral**：Mistral-large-latest, open-mixtral-8x22b, codestral-latest, mistral-small-latest
 - **Cohere**：Command-r-plus, Command-r, Command-light
 - **Groq**：Llama3-70b-8192, Llama3-8b-8192, Mixtral-8x7b-32768, Gemma-7b-it
-- **xAI**：Grok-4 系列、Grok-3 系列、Grok-2 系列模型
-- **Azure OpenAI**：GPT-4, GPT-4-turbo, GPT-35-turbo 系列
-- **其他服務**：Hugging Face、Together AI、Fireworks AI、Perplexity、Anyscale 等
+- **Anthropic**：Claude-3.5-sonnet, Claude-3-opus, Claude-3-sonnet, Claude-3-haiku
+- **Azure OpenAI**：GPT-4, GPT-4-turbo, GPT-35-turbo, GPT-35-turbo-16k
+- **xAI**：Grok-4-0709, Grok-3, Grok-3-mini, Grok-3-fast-us-east-1
+- **Hugging Face**：microsoft/DialoGPT-medium, facebook/blenderbot-400M-distill
+- **其他服務**：支援 27+ 種國際與中國本土服務提供商的 API Key 管理
 
 ### 💾 智能資料管理
 
@@ -70,24 +71,33 @@
   - 統一的導航頁首組件
   - 即時的服務狀態指示器
   - 優雅的載入動畫與狀態反饋
-  - 智能通知系統（成功/錯誤/警告）
+  - 智能通知系統（成功/錯誤/警告/資訊）
 - **進階功能**：
   - 服務模式智能切換
   - 模型參數調整（溫度、最大 token）
   - 對話記錄搜尋與篩選
   - 鍵盤快捷鍵支援
+  - 離線模式支援與自動重連
+  - 即時連線狀態監控
 
 ### 🔧 技術特色
 
 - **React 19 + Next.js 15.3.5**：最新前端技術棧
-- **TypeScript 完整類型定義**：確保程式碼品質
-- **自定義 Hooks 架構**：
+- **TypeScript 完整類型定義**：確保程式碼品質與型別安全
+- **進階狀態管理架構**：
   - `useChatHistory`：會話管理與持久化
   - `useApiKeys`：API Key 管理與加密
   - `usePortalAuth`：企業認證與權限管理
   - `useApiKeyImportExport`：資料匯入匯出
-- **Context 狀態管理**：跨組件的狀態共享
+  - `useEnhancedChat`：增強型聊天功能與錯誤恢復
+  - `useNotification`：通知系統與狀態管理
+- **Context 狀態管理**：跨組件的狀態共享與同步
 - **本地優先架構**：所有資料儲存在瀏覽器本地
+- **進階工具鏈**：
+  - 完整的錯誤處理與重試機制
+  - 效能監控與智能快取系統
+  - 配置管理與環境變數驗證
+  - 結構化日誌記錄與除錯工具
 
 ## 🚀 快速開始
 
@@ -123,12 +133,31 @@ cp .env.example .env.local
 編輯 `.env.local` 檔案：
 
 ```env
-# Portal 服務設定
+# 環境變數設定
 AI_BASE_URL=https://dgb01p240102.japaneast.cloudapp.azure.com
 TENANT_UUID=2595af81-c151-47eb-9f15-d17e0adbe3b4
 LOGIN_PATH=/wise/wiseadm/s/subadmin
+MAX_MESSAGE_LENGTH=10000
+MAX_FILE_SIZE=5242880
+RATE_LIMIT_WINDOW=60000
+RATE_LIMIT_MAX_REQUESTS=10
+SESSION_TIMEOUT=1800000
 
-# 安全設定
+# 安全設定（生產環境建議）
+ENCRYPTION_KEY=your-32-character-encryption-key
+ALLOWED_ORIGINS=yourdomain.com,www.yourdomain.com
+REQUIRE_API_KEY=true
+
+# 監控設定
+ENABLE_METRICS=true
+ENABLE_HEALTH_CHECKS=true
+LOG_LEVEL=info
+
+# 效能設定
+CACHE_MAX_SIZE=1000
+CACHE_TTL=300000
+AI_TIMEOUT=30000
+AI_MAX_RETRIES=3
 MAX_MESSAGE_LENGTH=10000
 MAX_FILE_SIZE=5242880
 RATE_LIMIT_WINDOW=60000
@@ -346,6 +375,102 @@ Content-Type: application/json
 }
 ```
 
+### 聊天相關 API
+
+**Portal 服務聊天**
+
+```http
+POST /api/chat
+Content-Type: application/json
+
+{
+  "message": "Hello, world!",
+  "username": "your-username",
+  "password": "your-password",
+  "id": "13",
+  "file": {
+    "data": "base64-encoded-file-content",
+    "name": "filename.txt"
+  }
+}
+```
+
+**增強型聊天（推薦）**
+
+```http
+POST /api/chat-enhanced
+Content-Type: application/json
+
+{
+  "message": "Hello, world!",
+  "username": "your-username",
+  "password": "your-password",
+  "id": "13",
+  "baseUrl": "https://dgb01p240102.japaneast.cloudapp.azure.com",
+  "file": {
+    "data": "base64-encoded-file-content",
+    "name": "filename.txt",
+    "type": "text/plain"
+  }
+}
+```
+
+**外部 AI 服務聊天**
+
+```http
+POST /api/ai-chat
+Content-Type: application/json
+
+{
+  "message": "Hello, world!",
+  "service": "openai",
+  "apiKey": "your-api-key",
+  "model": "gpt-4o",
+  "temperature": 0.7,
+  "maxTokens": 2000
+}
+```
+
+### 健康檢查 API
+
+**基本健康檢查**
+
+```http
+GET /api/health
+```
+
+**增強型健康檢查**
+
+```http
+GET /api/health-enhanced?extensive=true
+```
+
+### 回應格式
+
+**成功回應（聊天）**
+
+```json
+{
+  "reply": "AI response message",
+  "service": "portal",
+  "model": "default",
+  "metadata": {
+    "processingTime": 1500,
+    "endpoint": "主要完成端點"
+  }
+}
+```
+
+**錯誤回應**
+
+```json
+{
+  "error": "Error description",
+  "details": "Detailed error information",
+  "status": "failed"
+}
+```
+
 ### 聊天 API
 
 **原始 Portal 服務**
@@ -432,6 +557,14 @@ npm run lint
 
 # 建置測試
 npm run build
+
+# 健康檢查測試
+curl http://localhost:3000/api/health
+
+# API 端點測試
+curl -X POST http://localhost:3000/api/check-login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"test","password":"test","baseUrl":"https://dgb01p240102.japaneast.cloudapp.azure.com"}'
 ```
 
 ## 🌟 進階功能

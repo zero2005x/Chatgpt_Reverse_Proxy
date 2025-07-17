@@ -9,7 +9,7 @@ This is a comprehensive Next.js-based AI chat platform that provides dual-mode f
 ## Tech Stack
 
 - **Framework**: Next.js 15.3.5 with App Router
-- **Runtime**: React 19.0.0 
+- **Runtime**: React 19.0.0
 - **Language**: TypeScript 5
 - **Styling**: Tailwind CSS 4
 - **Linting**: ESLint with Next.js configuration
@@ -53,12 +53,25 @@ Chatgpt_Reverse_Proxy/
 │   │   ├── Notification.tsx     # Toast notification system
 │   │   ├── ServiceStatusIndicator.tsx # Visual service status
 │   │   └── Tooltip.tsx          # Interactive help tooltips
+│   ├── contexts/                # React Context providers
+│   │   └── ChatContext.tsx      # Chat state management
 │   ├── hooks/                   # Custom React hooks
 │   │   ├── useApiKeys.ts        # API key management
+│   │   ├── useApiKeyImportExport.ts # Batch operations
 │   │   ├── useChatHistory.ts    # Chat session management
-│   │   └── useApiKeyImportExport.ts # Batch operations
-│   └── types/                   # TypeScript type definitions
-│       └── message.ts
+│   │   ├── useEnhancedChat.ts   # Advanced chat functionality
+│   │   ├── useNotification.ts   # Notification system
+│   │   └── usePortalAuth.ts     # Authentication management
+│   ├── types/                   # TypeScript type definitions
+│   │   └── message.ts           # Core interfaces and types
+│   └── utils/                   # Utility functions
+│       ├── apiRetry.ts          # API retry and circuit breaker
+│       ├── configManager.ts     # Configuration management
+│       ├── errorHandling.ts     # Error handling and boundaries
+│       ├── logger.ts            # Structured logging system
+│       ├── performance.ts       # Performance monitoring
+│       ├── requestMiddleware.ts # Request middleware
+│       └── validation.ts        # Input validation utilities
 ├── public/                      # Static assets
 │   ├── file.svg
 │   ├── globe.svg
@@ -96,6 +109,20 @@ npm start
 
 # Run linting
 npm run lint
+
+# Type checking
+npx tsc --noEmit
+
+# Health check (in separate terminal after starting dev server)
+curl http://localhost:3000/api/health
+
+# Test login API
+curl -X POST http://localhost:3000/api/check-login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"test","password":"test","baseUrl":"https://dgb01p240102.japaneast.cloudapp.azure.com"}'
+
+# Test enhanced health check
+curl "http://localhost:3000/api/health-enhanced?extensive=true"
 ```
 
 ## API Architecture
@@ -103,9 +130,10 @@ npm run lint
 ### Dual-Mode API System
 
 #### Original Portal Service: `/api/chat`
+
 - **Method**: POST
 - **Content-Type**: application/json
-- **Request Body**: 
+- **Request Body**:
   - Basic: `{ "message": string, "username": string, "password": string, "id"?: string }`
   - With file: `{ "message": string, "username": string, "password": string, "id"?: string, "file": { "data": string } }`
 - **Response**: `{ "reply": string }` or `{ "error": string }`
@@ -113,11 +141,13 @@ npm run lint
 - **Security**: Input validation, XSS protection, and file type validation
 
 The API forwards requests to:
+
 - **Target URL**: `https://dgb01p240102.japaneast.cloudapp.azure.com/wise/wiseadm/s/promptportal/portal/completion`
 - **Method**: POST with `application/x-www-form-urlencoded` payload
 - **Payload**: `USERUPLOADFILE` (base64 file data), `USERPROMPT` (user message)
 
 #### External AI Services: `/api/ai-chat`
+
 - **Method**: POST
 - **Content-Type**: application/json
 - **Request Body**: `{ "message": string, "service": string, "model"?: string, "temperature"?: number, "maxTokens"?: number }`
@@ -126,6 +156,7 @@ The API forwards requests to:
 - **Model Selection**: Dynamic model selection based on service provider
 
 #### Authentication & Verification APIs
+
 - **`/api/check-login`**: Portal authentication status verification
 - **`/api/check-access`**: Portal access permission verification
 
@@ -138,7 +169,7 @@ The API forwards requests to:
 - **Default AI module ID**: '13' if not specified
 - **Comprehensive Error Handling**: Includes HTTP errors, JSON parsing failures, and authentication issues
 - **Intelligent Response Parsing**: Extracts AI responses from multiple possible response formats
-- **Security Features**: 
+- **Security Features**:
   - Rate limiting (10 requests/minute per IP)
   - Input validation and sanitization
   - XSS and injection attack protection
@@ -148,6 +179,7 @@ The API forwards requests to:
 ## External Dependencies
 
 ### Portal Service Dependencies
+
 - The application depends on an external AI service at `dgb01p240102.japaneast.cloudapp.azure.com`
 - Uses dynamic API key retrieval with configurable fallback
 - Implements automatic login with environment-based credentials
@@ -155,6 +187,7 @@ The API forwards requests to:
 - Requires session-based authentication with specific headers and cookies
 
 ### External AI Service Dependencies
+
 - **OpenAI**: GPT-4o, GPT-4o-mini, GPT-4-turbo, GPT-3.5-turbo
 - **Google**: Gemini-1.5-pro, Gemini-1.5-flash, Gemini-1.0-pro
 - **Anthropic**: Claude-3.5-sonnet, Claude-3-opus, Claude-3-sonnet, Claude-3-haiku
@@ -180,6 +213,7 @@ The API forwards requests to:
 ## Testing and Quality
 
 Run these commands before committing:
+
 ```bash
 npm run lint
 npm run build
@@ -190,6 +224,7 @@ npm run build
 ### Portal Service Testing
 
 #### Basic Text Chat
+
 ```bash
 curl -X POST http://localhost:3000/api/chat \
   -H "Content-Type: application/json" \
@@ -197,6 +232,7 @@ curl -X POST http://localhost:3000/api/chat \
 ```
 
 #### File Upload Chat
+
 ```bash
 curl -X POST http://localhost:3000/api/chat \
   -H "Content-Type: application/json" \
@@ -204,6 +240,7 @@ curl -X POST http://localhost:3000/api/chat \
 ```
 
 #### PowerShell Testing
+
 ```powershell
 $body = @{
     message = "Please analyze the uploaded file"
@@ -221,6 +258,7 @@ Invoke-RestMethod -Uri http://localhost:3000/api/chat -Method POST -ContentType 
 ### External AI Services Testing
 
 #### OpenAI GPT-4o
+
 ```bash
 curl -X POST http://localhost:3000/api/ai-chat \
   -H "Content-Type: application/json" \
@@ -228,6 +266,7 @@ curl -X POST http://localhost:3000/api/ai-chat \
 ```
 
 #### Google Gemini
+
 ```bash
 curl -X POST http://localhost:3000/api/ai-chat \
   -H "Content-Type: application/json" \
@@ -235,6 +274,7 @@ curl -X POST http://localhost:3000/api/ai-chat \
 ```
 
 #### Anthropic Claude
+
 ```bash
 curl -X POST http://localhost:3000/api/ai-chat \
   -H "Content-Type: application/json" \
@@ -244,6 +284,7 @@ curl -X POST http://localhost:3000/api/ai-chat \
 ### Authentication Testing
 
 #### Check Login Status
+
 ```bash
 curl -X POST http://localhost:3000/api/check-login \
   -H "Content-Type: application/json" \
@@ -251,6 +292,7 @@ curl -X POST http://localhost:3000/api/check-login \
 ```
 
 #### Check Access Permission
+
 ```bash
 curl -X POST http://localhost:3000/api/check-access \
   -H "Content-Type: application/json" \
@@ -258,6 +300,7 @@ curl -X POST http://localhost:3000/api/check-access \
 ```
 
 ### Testing Rate Limiting
+
 ```bash
 # This will trigger rate limiting after 10 requests within 1 minute
 for i in {1..12}; do
@@ -274,7 +317,7 @@ done
 - **Rate Limiting**: 10 requests per minute per IP address to prevent abuse
 - **Input Validation**: Comprehensive validation for usernames (3-50 chars), passwords (6-100 chars), and messages (max 10,000 chars)
 - **XSS Protection**: Malicious content detection and filtering for script tags, JavaScript URLs, and event handlers
-- **File Upload Security**: 
+- **File Upload Security**:
   - Type restrictions (text/plain, text/csv, application/pdf only)
   - Size limits (maximum 5MB)
   - Base64 format validation
@@ -296,11 +339,13 @@ done
 ## Future Considerations
 
 ### Performance Optimization
+
 - **Session Caching**: Implement session caching to reduce login frequency
 - **Response Caching**: Add response caching for frequently asked questions
 - **Connection Pooling**: Consider connection pooling for high-traffic scenarios
 
 ### Enhanced Features
+
 - **Multi-Language Support**: Add internationalization for different languages
 - **Advanced Chat Features**: Implement message reactions, reply threads, and file sharing
 - **AI Model Comparison**: Side-by-side comparison of different AI models
@@ -308,18 +353,21 @@ done
 - **Voice Chat**: Add speech-to-text and text-to-speech capabilities
 
 ### Security Enhancements
+
 - **OAuth Integration**: Add OAuth2 authentication for external services
 - **Advanced Threat Detection**: Implement AI-based content filtering
 - **Audit Logging**: Comprehensive audit trails for all user actions
 - **Role-Based Access Control**: Fine-grained permission management
 
 ### Scalability & Monitoring
+
 - **Load Balancing**: Implement load balancing for multiple backend AI endpoints
 - **Real-time Monitoring**: Add comprehensive monitoring and alerting
 - **Database Integration**: Move from localStorage to proper database backend
 - **API Analytics**: Detailed usage analytics and reporting
 
 ### User Experience
+
 - **Mobile App**: Native mobile application development
 - **Browser Extension**: Chrome/Firefox extension for quick access
 - **Keyboard Shortcuts**: Advanced keyboard navigation and shortcuts

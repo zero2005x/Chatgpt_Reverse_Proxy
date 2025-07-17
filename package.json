@@ -1,19 +1,27 @@
 {
   "name": "ai-chat-multi-service-platform",
-  "description": "A comprehensive AI chat platform supporting 27+ AI services with secure API key management, dual authentication modes, and intelligent session management",
+  "description": "A comprehensive AI chat platform supporting 27+ AI services with secure API key management, dual authentication modes, intelligent session management, and enhanced error recovery",
   "keywords": [
     "ai", 
     "chat", 
     "nextjs", 
     "typescript",
+    "react",
     "openai", 
     "claude", 
-    "gemini", 
+    "gemini",
+    "anthropic",
+    "groq",
+    "mistral",
+    "cohere",
     "multi-service",
     "api-key-management",
     "chat-history",
     "portal-authentication",
-    "enterprise-ready"
+    "enterprise-ready",
+    "health-monitoring",
+    "error-recovery",
+    "performance-monitoring"
   ],
   "repository": {
     "type": "git",

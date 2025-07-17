@@ -659,10 +659,40 @@ export async function GET() {
     uptime: process.uptime(),
     memory: process.memoryUsage(),
     version: process.env.NEXT_PUBLIC_APP_VERSION || "1.0.0",
+    env: process.env.NODE_ENV || "development",
+    services: {
+      portal: {
+        baseUrl: process.env.AI_BASE_URL ? "configured" : "not configured",
+        tenantUuid: process.env.TENANT_UUID ? "configured" : "not configured",
+      },
+    },
   };
 
-  return NextResponse.json(health);
+  return NextResponse.json(health, { status: 200 });
 }
+```
+
+```typescript
+// src/app/api/health-enhanced/route.ts
+import { NextRequest, NextResponse } from "next/server";
+
+export async function GET(req: NextRequest) {
+  // Enhanced health check with comprehensive system monitoring
+  // Includes AI service connectivity, performance metrics, and diagnostics
+}
+```
+
+測試健康檢查：
+
+```bash
+# 基本健康檢查
+curl http://localhost:3000/api/health
+
+# 增強型健康檢查
+curl "http://localhost:3000/api/health-enhanced?extensive=true"
+
+# Docker 容器健康檢查
+curl http://localhost:3000/api/health || exit 1
 ```
 
 ### 外部監控服務

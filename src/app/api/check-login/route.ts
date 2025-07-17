@@ -51,7 +51,7 @@ async function performLogin(username: string, password: string, baseUrl?: string
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36',
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
       'Accept-Language': 'zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7',
-      'Origin': baseUrl,
+      'Origin': actualBaseUrl,
       'Referer': loginUrl,
       'Upgrade-Insecure-Requests': '1',
     };
@@ -67,11 +67,19 @@ async function performLogin(username: string, password: string, baseUrl?: string
       redirect: 'manual',
     });
     
+    logger.debug('登入回應狀態', { status: loginResponse.status });
+    
     if (loginResponse.status === 302) {
       const setCookieHeaders = loginResponse.headers.get('set-cookie');
       const location = loginResponse.headers.get('location');
       
+      logger.debug('處理重定向', { 
+        location, 
+        hasCookies: !!setCookieHeaders 
+      });
+      
       if (location && location.includes('login')) {
+        logger.warn('重定向到登入頁面，登入失敗');
         return null;
       }
       
@@ -82,6 +90,7 @@ async function performLogin(username: string, password: string, baseUrl?: string
         for (const cookie of cookies) {
           const cookiePart = cookie.split(';')[0].trim();
           if (cookiePart.includes('SESSION=')) {
+            logger.debug('找到 SESSION cookie');
             allCookies.push(cookiePart);
           }
         }
@@ -100,8 +109,60 @@ async function performLogin(username: string, password: string, baseUrl?: string
       allCookies.push('SmartRobot.lastTenantUuid=2595af81-c151-47eb-9f15-d17e0adbe3b4');
       
       if (allCookies.length > 0) {
+        logger.info('登入成功，取得會話 cookie');
         return allCookies.join('; ');
       }
+    } else if (loginResponse.status === 200) {
+      // 檢查 200 回應是否包含成功登入的指標
+      logger.debug('收到 200 回應，檢查內容');
+      
+      const setCookieHeaders = loginResponse.headers.get('set-cookie');
+      const responseText = await loginResponse.text();
+      
+      // 檢查回應是否包含成功登入的指標
+      const isLoginSuccess = responseText.includes('dashboard') || 
+                           responseText.includes('portal') ||
+                           responseText.includes('SmartRobot') ||
+                           (setCookieHeaders && setCookieHeaders.includes('SESSION='));
+      
+      if (isLoginSuccess && setCookieHeaders) {
+        logger.debug('200 回應包含登入成功指標');
+        
+        const allCookies = [];
+        
+        const cookies = setCookieHeaders.split(',');
+        for (const cookie of cookies) {
+          const cookiePart = cookie.split(';')[0].trim();
+          if (cookiePart.includes('SESSION=')) {
+            logger.debug('在 200 回應中找到 SESSION cookie');
+            allCookies.push(cookiePart);
+          }
+        }
+        
+        if (initialCookies) {
+          const cookies = initialCookies.split(',');
+          for (const cookie of cookies) {
+            const cookiePart = cookie.split(';')[0].trim();
+            if (cookiePart.includes('SmartRobot.') || cookiePart.includes('hazelcast.')) {
+              allCookies.push(cookiePart);
+            }
+          }
+        }
+        
+        allCookies.push('SmartRobot.lastTenantUuid=2595af81-c151-47eb-9f15-d17e0adbe3b4');
+        
+        if (allCookies.length > 0) {
+          logger.info('200 回應登入成功，取得會話 cookie');
+          return allCookies.join('; ');
+        }
+      } else {
+        logger.warn('200 回應但無登入成功指標', { 
+          hasLoginIndicator: isLoginSuccess,
+          hasCookies: !!setCookieHeaders
+        });
+      }
+    } else {
+      logger.warn('登入失敗，狀態碼不符預期', { status: loginResponse.status });
     }
     
     return null;
@@ -143,7 +204,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const sessionCookie = await performLogin(username, password);
+    const sessionCookie = await performLogin(username, password, baseUrl);
     
     if (sessionCookie) {
       return NextResponse.json({

@@ -114,6 +114,57 @@ async function performLogin(username: string, password: string, baseUrl: string)
         logger.info('登入成功，取得會話 cookie');
         return sessionCookie;
       }
+    } else if (loginResponse.status === 200) {
+      // 檢查 200 回應是否包含成功登入的指標
+      logger.debug('收到 200 回應，檢查內容');
+      
+      const setCookieHeaders = loginResponse.headers.get('set-cookie');
+      const responseText = await loginResponse.text();
+      
+      // 檢查回應是否包含成功登入的指標
+      const isLoginSuccess = responseText.includes('dashboard') || 
+                           responseText.includes('portal') ||
+                           responseText.includes('SmartRobot') ||
+                           (setCookieHeaders && setCookieHeaders.includes('SESSION='));
+      
+      if (isLoginSuccess && setCookieHeaders) {
+        logger.debug('200 回應包含登入成功指標');
+        
+        const allCookies = [];
+        
+        const cookies = setCookieHeaders.split(',');
+        for (const cookie of cookies) {
+          const cookiePart = cookie.split(';')[0].trim();
+          if (cookiePart.includes('SESSION=')) {
+            logger.debug('在 200 回應中找到 SESSION cookie');
+            allCookies.push(cookiePart);
+          }
+        }
+        
+        if (initialCookies) {
+          const cookies = initialCookies.split(',');
+          for (const cookie of cookies) {
+            const cookiePart = cookie.split(';')[0].trim();
+            if (cookiePart.includes('SmartRobot.') || cookiePart.includes('hazelcast.')) {
+              allCookies.push(cookiePart);
+            }
+          }
+        }
+        
+        allCookies.push('SmartRobot.lastTenantUuid=2595af81-c151-47eb-9f15-d17e0adbe3b4');
+        
+        if (allCookies.length > 0) {
+          const sessionCookie = allCookies.join('; ');
+          logger.info('200 回應登入成功，取得會話 cookie');
+          return sessionCookie;
+        }
+      } else {
+        logger.warn('200 回應但無登入成功指標', { 
+          hasLoginIndicator: isLoginSuccess,
+          hasCookies: !!setCookieHeaders
+        });
+        throw new AuthenticationError('登入失敗，用戶名或密碼錯誤');
+      }
     }
 
     logger.warn('登入失敗，狀態碼不符預期', { status: loginResponse.status });

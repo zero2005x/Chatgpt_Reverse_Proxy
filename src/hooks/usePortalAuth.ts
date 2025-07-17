@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { LoginStatus, PortalAccess } from '@/types/message';
 import { uiLogger } from '@/utils/logger';
 import { ErrorHandler } from '@/utils/errorHandling';
@@ -80,6 +80,19 @@ export function usePortalAuth() {
   const [portalAccess, setPortalAccess] = useState<PortalAccess>({ hasAccess: false, status: 'not_checked' });
   const [isFromHomepageAuth, setIsFromHomepageAuth] = useState(false);
 
+  // Use refs to store current state values to avoid circular dependencies
+  const stateRef = useRef({
+    credentials: null as PortalCredentials | null,
+    loginStatus: { isLoggedIn: false, status: 'not_checked' } as LoginStatus,
+    portalAccess: { hasAccess: false, status: 'not_checked' } as PortalAccess,
+    isFromHomepageAuth: false
+  });
+
+  // Update refs whenever state changes
+  useEffect(() => {
+    stateRef.current = { credentials, loginStatus, portalAccess, isFromHomepageAuth };
+  }, [credentials, loginStatus, portalAccess, isFromHomepageAuth]);
+
   const clearPortalAuth = useCallback(() => {
     try {
       localStorage.removeItem('portalAuth');
@@ -91,7 +104,7 @@ export function usePortalAuth() {
     } catch (error) {
       logger.error('清除 Portal 認證失敗', error);
     }
-  }, [logger]);
+  }, []); // Remove logger dependency to prevent circular dependencies
 
   const loadPortalAuth = useCallback(() => {
     try {
@@ -101,7 +114,12 @@ export function usePortalAuth() {
         
         if (!decryptedData || decryptedData === saved) {
           console.warn('解密可能失敗，清除儲存的資料');
-          clearPortalAuth();
+          // Inline clear logic to avoid circular dependency
+          localStorage.removeItem('portalAuth');
+          setCredentials(null);
+          setLoginStatus({ isLoggedIn: false, status: 'not_checked' });
+          setPortalAccess({ hasAccess: false, status: 'not_checked' });
+          setIsFromHomepageAuth(false);
           return;
         }
         
@@ -109,13 +127,23 @@ export function usePortalAuth() {
         
         if (!parsedData || typeof parsedData.timestamp !== 'number') {
           console.warn('儲存的資料結構不正確，清除資料');
-          clearPortalAuth();
+          // Inline clear logic to avoid circular dependency
+          localStorage.removeItem('portalAuth');
+          setCredentials(null);
+          setLoginStatus({ isLoggedIn: false, status: 'not_checked' });
+          setPortalAccess({ hasAccess: false, status: 'not_checked' });
+          setIsFromHomepageAuth(false);
           return;
         }
         
         const now = Date.now();
         if (now - parsedData.timestamp > SESSION_TIMEOUT) {
-          clearPortalAuth();
+          // Inline clear logic to avoid circular dependency
+          localStorage.removeItem('portalAuth');
+          setCredentials(null);
+          setLoginStatus({ isLoggedIn: false, status: 'not_checked' });
+          setPortalAccess({ hasAccess: false, status: 'not_checked' });
+          setIsFromHomepageAuth(false);
           return;
         }
         
@@ -126,13 +154,18 @@ export function usePortalAuth() {
       }
     } catch (error) {
       console.error('載入 Portal 認證失敗:', error);
-      clearPortalAuth();
+      // Inline clear logic to avoid circular dependency
+      localStorage.removeItem('portalAuth');
+      setCredentials(null);
+      setLoginStatus({ isLoggedIn: false, status: 'not_checked' });
+      setPortalAccess({ hasAccess: false, status: 'not_checked' });
+      setIsFromHomepageAuth(false);
     }
-  }, [clearPortalAuth]);
+  }, []); // No dependencies to prevent circular dependencies
 
   useEffect(() => {
     loadPortalAuth();
-  }, [loadPortalAuth]);
+  }, []); // Empty dependency array since loadPortalAuth is stable
 
   const savePortalAuth = useCallback((
     newCredentials: PortalCredentials | null,
@@ -160,7 +193,7 @@ export function usePortalAuth() {
     } catch (error) {
       console.error('儲存 Portal 認證失敗:', error);
     }
-  }, []); // Remove dependencies to prevent infinite loops
+  }, []); // Empty dependencies to prevent infinite loops
 
   const updateAuthStatus = useCallback((
     newCredentials: PortalCredentials,
@@ -172,34 +205,40 @@ export function usePortalAuth() {
   }, [savePortalAuth]);
 
   const updateCredentials = useCallback((newCredentials: PortalCredentials) => {
-    savePortalAuth(newCredentials, loginStatus, portalAccess, isFromHomepageAuth);
-  }, [loginStatus, portalAccess, isFromHomepageAuth, savePortalAuth]);
+    const currentState = stateRef.current;
+    savePortalAuth(newCredentials, currentState.loginStatus, currentState.portalAccess, currentState.isFromHomepageAuth);
+  }, [savePortalAuth]);
 
   const updateLoginStatus = useCallback((newLoginStatus: LoginStatus) => {
-    savePortalAuth(credentials, newLoginStatus, portalAccess, isFromHomepageAuth);
-  }, [credentials, portalAccess, isFromHomepageAuth, savePortalAuth]);
+    const currentState = stateRef.current;
+    savePortalAuth(currentState.credentials, newLoginStatus, currentState.portalAccess, currentState.isFromHomepageAuth);
+  }, [savePortalAuth]);
 
   const updatePortalAccess = useCallback((newPortalAccess: PortalAccess) => {
-    savePortalAuth(credentials, loginStatus, newPortalAccess, isFromHomepageAuth);
-  }, [credentials, loginStatus, isFromHomepageAuth, savePortalAuth]);
+    const currentState = stateRef.current;
+    savePortalAuth(currentState.credentials, currentState.loginStatus, newPortalAccess, currentState.isFromHomepageAuth);
+  }, [savePortalAuth]);
 
   const updateIsFromHomepageAuth = useCallback((newIsFromHomepageAuth: boolean) => {
-    savePortalAuth(credentials, loginStatus, portalAccess, newIsFromHomepageAuth);
-  }, [credentials, loginStatus, portalAccess, savePortalAuth]);
+    const currentState = stateRef.current;
+    savePortalAuth(currentState.credentials, currentState.loginStatus, currentState.portalAccess, newIsFromHomepageAuth);
+  }, [savePortalAuth]);
 
   const consumeIsFromHomepageAuth = useCallback(() => {
-    if (isFromHomepageAuth) {
-      savePortalAuth(credentials, loginStatus, portalAccess, false);
+    const currentState = stateRef.current;
+    if (currentState.isFromHomepageAuth) {
+      savePortalAuth(currentState.credentials, currentState.loginStatus, currentState.portalAccess, false);
     }
-  }, [isFromHomepageAuth, credentials, loginStatus, portalAccess, savePortalAuth]);
+  }, [savePortalAuth]);
 
   const isAuthenticated = useCallback(() => {
-    return !!(credentials && 
-           credentials.username && 
-           credentials.password && 
-           loginStatus.status === 'success' && 
-           portalAccess.status === 'success');
-  }, [credentials, loginStatus.status, portalAccess.status]);
+    const currentState = stateRef.current;
+    return !!(currentState.credentials && 
+           currentState.credentials.username && 
+           currentState.credentials.password && 
+           currentState.loginStatus.status === 'success' && 
+           currentState.portalAccess.status === 'success');
+  }, []); // No dependencies to prevent infinite re-renders
 
   const isSessionExpiringSoon = () => {
     try {
@@ -218,14 +257,15 @@ export function usePortalAuth() {
   };
 
   const extendSession = useCallback(() => {
-    if (credentials) {
+    const currentState = stateRef.current;
+    if (currentState.credentials) {
       // Update only the timestamp in localStorage without triggering state changes
       try {
         const authState: PortalAuthState = {
-          credentials,
-          loginStatus,
-          portalAccess,
-          isFromHomepageAuth,
+          credentials: currentState.credentials,
+          loginStatus: currentState.loginStatus,
+          portalAccess: currentState.portalAccess,
+          isFromHomepageAuth: currentState.isFromHomepageAuth,
           timestamp: Date.now()
         };
         
@@ -235,7 +275,7 @@ export function usePortalAuth() {
         console.error('延長會話失敗:', error);
       }
     }
-  }, [credentials, loginStatus, portalAccess, isFromHomepageAuth]);
+  }, []);
 
   return {
     credentials,

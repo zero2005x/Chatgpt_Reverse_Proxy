@@ -6,7 +6,21 @@ AI Chat Multi-Service Platform 提供統一的 API 介面，支援原始 Portal 
 
 ## 基礎資訊
 
-- **Base URL**: `https://your-domain.vercel.app/api`
+- **Base URL**: `https://your-doma### 支援的服務類型
+
+| Service       | Models                                                            | Notes                |
+| ------------- | ----------------------------------------------------------------- | -------------------- | ------- |
+| `openai`      | gpt-4o, gpt-4o-mini, gpt-4-turbo, gpt-3.5-turbo                   | OpenAI 官方模型      |
+| `google`      | gemini-1.5-pro, gemini-1.5-flash, gemini-1.0-pro                  | Google Gemini 系列   |
+| `mistral`     | mistral-large-latest, open-mixtral-8x22b, codestral-latest        | Mistral AI 模型      |
+| `cohere`      | command-r-plus, command-r, command-light                          | Cohere 指令模型      |
+| `groq`        | llama3-70b-8192, llama3-8b-8192, mixtral-8x7b-32768, gemma-7b-it  | Groq 加速推理        |
+| `anthropic`   | claude-3.5-sonnet, claude-3-opus, claude-3-sonnet, claude-3-haiku | Anthropic Claude     |
+| `azure`       | gpt-4, gpt-4-turbo, gpt-35-turbo, gpt-35-turbo-16k                | Azure OpenAI Service |
+| `xai`         | grok-4-0709, grok-3, grok-3-mini, grok-3-fast-us-east-1           | xAI Grok 系列        |
+| `huggingface` | microsoft/DialoGPT-medium, facebook/blenderbot-400M-distill       | Hugging Face 模型    |
+| `generic`     | 自定義模型                                                        | 通用 OpenAI 兼容端點 | pp/api` |
+
 - **Content-Type**: `application/json`
 - **Rate Limit**: 10 requests/minute per IP
 - **Max Request Size**: 5MB
@@ -179,10 +193,10 @@ POST /api/ai-chat
   "message": "Explain quantum computing in simple terms",
   "service": "openai",
   "apiKey": "sk-proj-...",
-  "model": "gpt-4o",
+  "model": "gpt-3.5-turbo",
   "temperature": 0.7,
-  "maxTokens": 1000,
-  "customEndpoint": "https://api.custom-provider.com/v1/chat" // 可選，用於自定義端點
+  "maxTokens": 2000,
+  "customEndpoint": "https://api.custom-provider.com/v1/chat" // 可選，用於 generic 服務
 }
 ```
 
